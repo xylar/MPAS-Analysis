@@ -98,8 +98,11 @@ def build_analysis_list(config, refConfig):  # {{{
 
     analyses.append(ocean.ClimatologyMapSose(
             config, oceanClimatolgyTask, refConfig))
-    analyses.append(ocean.ClimatologyMapBGC(config, oceanClimatolgyTask,
-                                            refConfig))
+    bgcTask = ocean.ClimatologyMapBGC(config, oceanClimatolgyTask,
+                                      refConfig)
+    analyses.append(bgcTask)
+    analyses.append(ocean.ClimatologySkillScoreBGC(
+            config, bgcTask, refConfig))
 
     analyses.append(ocean.ClimatologyMapArgoTemperature(
             config, oceanClimatolgyTask, refConfig))

@@ -27,11 +27,24 @@ class ClimatologyMapBGC(AnalysisTask):  # {{{
     """
     An analysis task for plotting of BGC variables
 
-    Authors
-    -------
-    Phillip J. Wolfram, Riley X. Brady, Xylar Asay-Davis
+    Attributes
+    ----------
 
+    remapClimatologySubtasks : dict of ``RemapBGCClimatology``
+        Subtask for remapping BGC from MPAS-O results
+
+    remapObservationsSubtasks : dict of ``RemapObservedBGCClimatology``
+        Subtask for remapping BGC observations
+
+    mpasFieldNames : dict
+        The name of the field in timeSeriesStatsMonthlyOutput files, with field
+        names as keys
     """
+
+    # Authors
+    # -------
+    # Phillip J. Wolfram, Riley X. Brady, Xylar Asay-Davis
+
     def __init__(self, config, mpasClimatologyTask, refConfig=None):  # {{{
         """
         Construct the analysis task.
@@ -47,10 +60,12 @@ class ClimatologyMapBGC(AnalysisTask):  # {{{
         refConfig :  ``MpasAnalysisConfigParser``, optional
             Configuration options for a reference run (if any)
 
-        Authors
-        -------
-        Phillip J. Wolfram, Riley X. Brady, Xylar Asay-Davis
         """
+
+        # Authors
+        # -------
+        # Phillip J. Wolfram, Riley X. Brady, Xylar Asay-Davis
+
         # call the constructor from the base class (AnalysisTask)
 
         bgcVars = config.getExpression('climatologyMapBGC', 'variables')
@@ -76,11 +91,16 @@ class ClimatologyMapBGC(AnalysisTask):  # {{{
             raise ValueError('config section {} does not contain valid list '
                              'of comparison grids'.format(sectionName))
 
+        self.mpasFieldNames = {}
+        self.remapClimatologySubtasks = {}
+        self.remapObservationsSubtasks = {}
+
         for fieldName in bgcVars:
 
             fieldSectionName = '{}_{}'.format(sectionName, fieldName)
             prefix = config.get(fieldSectionName, 'filePrefix')
             mpasFieldName = '{}{}'.format(prefix, fieldName)
+            self.mpasFieldNames[fieldName] = mpasFieldName
 
             # CO2 flux and pCO2 has no vertical levels, throws error if you try
             # to select any. Can add any other flux-like variables to this
@@ -113,6 +133,7 @@ class ClimatologyMapBGC(AnalysisTask):  # {{{
                 seasons=seasons,
                 iselValues=iselValues,
                 subtaskName='remapMpasClimatology_{}'.format(fieldName))
+            self.remapClimatologySubtasks[fieldName] = remapClimatologySubtask
 
             if refConfig is None:
                 refTitleLabel = 'Observations'
@@ -171,13 +192,16 @@ class ClimatologyMapBGC(AnalysisTask):  # {{{
                 outFileLabel = fieldName
                 diffTitleLabel = 'Main - Reference'
 
+            self.remapObservationsSubtasks[fieldName] = \
+                remapObservationsSubtask
+
             for comparisonGridName in comparisonGridNames:
                 for season in seasons:
                     # make a new subtask for this season and comparison grid
                     subtask = PlotClimatologyMapSubtask(
                             self, season, comparisonGridName,
                             remapClimatologySubtask, remapObservationsSubtask,
-                            refConfig, subtaskName = 'plot{}_{}_{}'.format(
+                            refConfig, subtaskName='plot{}_{}_{}'.format(
                                 fieldName, season, comparisonGridName))
 
                     subtask.set_plot_info(
@@ -223,6 +247,7 @@ class ClimatologyMapBGC(AnalysisTask):  # {{{
                   """)
 
         # }}}
+
     # }}}
 
 
@@ -367,6 +392,125 @@ class RemapObservedBGCClimatology(RemapObservedClimatologySubtask):  # {{{
 
         dsObs = xr.open_dataset(fileName)
         return dsObs  # }}}
+
+    # }}}
+
+
+class ClimatologySkillScoreBGC(AnalysisTask):  # {{{
+    """
+    An analysis task for plotting skill scores based on climatologies of
+    BGC variables
+
+    Attributes
+    ----------
+    refConfig :  ``MpasAnalysisConfigParser``
+        Configuration options for a reference run (or ``None`` if not comparing
+        to a reference run)
+
+    bgcTask : ``ClimatologyMapBGC``
+        The task for computing climatology maps of BGC variables
+
+    """
+
+    # Authors
+    # -------
+    # Xylar Asay-Davis
+
+    def __init__(self, config, bgcTask, refConfig=None):  # {{{
+        """
+        Construct the analysis task.
+
+        Parameters
+        ----------
+        config :  ``MpasAnalysisConfigParser``
+            Configuration options
+
+        bgcTask : ``ClimatologyMapBGC``
+            The task for computing climatology maps of BGC variables
+
+        refConfig :  ``MpasAnalysisConfigParser``, optional
+            Configuration options for a reference run (if any)
+        """
+
+        # Authors
+        # -------
+        # Xylar Asay-Davis
+
+        # call the constructor from the base class (AnalysisTask)
+        super(ClimatologySkillScoreBGC, self).__init__(
+            config=config, taskName='climatologySkillScoreBGC',
+            componentName='ocean',
+            tags=['climatology', 'BGC', 'skillScore'])
+
+        self.bgcTask = bgcTask
+        self.run_after(bgcTask)
+
+        # }}}
+
+    def run_task(self):  # {{{
+        '''
+        Compute skill scores for each BGC valiable
+        '''
+        # Authors
+        # -------
+        # Xylar Asay-Davis
+
+        config = self.config
+        sectionName = 'climatologyMapBGC'
+
+        comparisonGridNames = config.getExpression(sectionName,
+                                                   'comparisonGrids')
+
+        # read in what seasons we want to plot
+        seasons = config.getExpression(sectionName, 'seasons')
+
+        if 'latlon' not in comparisonGridNames:
+            self.logger.warn('latlon not in comparisonGridNames for BGC. '
+                             'Skipping skill score computation.')
+            return
+
+        if self.refConfig:
+            self.logger.warn("Can't compute a skill score for main vs. ref "
+                             "analysis.")
+            return
+
+        comparisonGridName = 'latlon'
+        bgcTask = self.bgcTask
+        for fieldName in bgcTask.mpasFieldNames.keys():
+            mpasFieldName = bgcTask.mpasFieldNames[fieldName]
+            remapMpasClimatologySubtask = \
+                bgcTask.remapMpasClimatologySubtasks[fieldName]
+            remapObservationsSubtask = \
+                bgcTask.remapObservationsSubtasks[fieldName]
+            for season in seasons:
+
+                # first read the model climatology
+                remappedFileName = \
+                    remapMpasClimatologySubtask.get_remapped_file_name(
+                            season=season,
+                            comparisonGridName=comparisonGridName)
+
+                remappedModelClimatology = xr.open_dataset(remappedFileName)
+
+                # now the observations or reference run
+                remappedFileName = \
+                    remapObservationsSubtask.get_file_name(
+                        stage='remapped', season=season,
+                        comparisonGridName=comparisonGridName)
+
+                remappedRefClimatology = xr.open_dataset(remappedFileName)
+
+                modelOutput = remappedModelClimatology[mpasFieldName]
+
+                refOutput = remappedRefClimatology[fieldName]
+
+                bias = modelOutput - refOutput
+
+                meanBias = bias.mean(dim='lat').mean(dim='lon')
+
+                print(fieldName, season, meanBias)
+
+        # }}}
 
     # }}}
 
