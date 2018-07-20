@@ -22,6 +22,9 @@ from mpas_analysis.ocean.plot_climatology_map_subtask import \
 
 from mpas_analysis.shared.grid import LatLonGridDescriptor
 
+from mpas_analysis.shared.skillscores import skillscores, \
+    murphy_ss, correlation_coeff_r, coeff_determination_r2, wilmott_ssw
+
 
 class ClimatologyMapBGC(AnalysisTask):  # {{{
     """
@@ -39,6 +42,10 @@ class ClimatologyMapBGC(AnalysisTask):  # {{{
     mpasFieldNames : dict
         The name of the field in timeSeriesStatsMonthlyOutput files, with field
         names as keys
+
+    refConfig :  ``MpasAnalysisConfigParser``
+        Configuration options for a reference run (if any)
+
     """
 
     # Authors
@@ -94,13 +101,13 @@ class ClimatologyMapBGC(AnalysisTask):  # {{{
         self.mpasFieldNames = {}
         self.remapClimatologySubtasks = {}
         self.remapObservationsSubtasks = {}
+        self.refConfig = refConfig
 
         for fieldName in bgcVars:
 
             fieldSectionName = '{}_{}'.format(sectionName, fieldName)
             prefix = config.get(fieldSectionName, 'filePrefix')
             mpasFieldName = '{}{}'.format(prefix, fieldName)
-            self.mpasFieldNames[fieldName] = mpasFieldName
 
             # CO2 flux and pCO2 has no vertical levels, throws error if you try
             # to select any. Can add any other flux-like variables to this
@@ -123,6 +130,7 @@ class ClimatologyMapBGC(AnalysisTask):  # {{{
             else:
                 variableList = [mpasFieldName]
                 plotField = mpasFieldName
+            self.mpasFieldNames[fieldName] = plotField
 
             remapClimatologySubtask = RemapBGCClimatology(
                 mpasClimatologyTask=mpasClimatologyTask,
@@ -222,6 +230,7 @@ class ClimatologyMapBGC(AnalysisTask):  # {{{
                     self.add_subtask(subtask)
 
     def setup_and_check(self):  # {{{
+
         '''
         Check if preindustrial flag is turned on or off.
         '''
@@ -453,7 +462,7 @@ class ClimatologySkillScoreBGC(AnalysisTask):  # {{{
         '''
         # Authors
         # -------
-        # Xylar Asay-Davis
+        # Xylar Asay-Davis, Phillip J. Wolfram
 
         config = self.config
         sectionName = 'climatologyMapBGC'
@@ -469,27 +478,29 @@ class ClimatologySkillScoreBGC(AnalysisTask):  # {{{
                              'Skipping skill score computation.')
             return
 
-        if self.refConfig:
-            self.logger.warn("Can't compute a skill score for main vs. ref "
-                             "analysis.")
-            return
-
+        scores = []
         comparisonGridName = 'latlon'
         bgcTask = self.bgcTask
+        if bgcTask.refConfig is not None:
+            self.logger.warn("Can't compute a BGC skill score for main vs. "
+                             "ref analysis.")
+            return
+
         for fieldName in bgcTask.mpasFieldNames.keys():
             mpasFieldName = bgcTask.mpasFieldNames[fieldName]
-            remapMpasClimatologySubtask = \
-                bgcTask.remapMpasClimatologySubtasks[fieldName]
+            remapClimatologySubtask = \
+                bgcTask.remapClimatologySubtasks[fieldName]
             remapObservationsSubtask = \
                 bgcTask.remapObservationsSubtasks[fieldName]
             for season in seasons:
 
                 # first read the model climatology
                 remappedFileName = \
-                    remapMpasClimatologySubtask.get_remapped_file_name(
+                    remapClimatologySubtask.get_remapped_file_name(
                             season=season,
                             comparisonGridName=comparisonGridName)
 
+                print(remappedFileName)
                 remappedModelClimatology = xr.open_dataset(remappedFileName)
 
                 # now the observations or reference run
@@ -498,17 +509,20 @@ class ClimatologySkillScoreBGC(AnalysisTask):  # {{{
                         stage='remapped', season=season,
                         comparisonGridName=comparisonGridName)
 
+                print(remappedFileName)
                 remappedRefClimatology = xr.open_dataset(remappedFileName)
 
                 modelOutput = remappedModelClimatology[mpasFieldName]
 
                 refOutput = remappedRefClimatology[fieldName]
 
-                bias = modelOutput - refOutput
+                scores = []
+                for ss in skillscores:
+                    scores.append([ss,
+                                   skillscores[ss](modelOutput.values.ravel(),
+                                                   refOutput.values.ravel())])
 
-                meanBias = bias.mean(dim='lat').mean(dim='lon')
-
-                print(fieldName, season, meanBias)
+                print(fieldName, season, scores)
 
         # }}}
 
