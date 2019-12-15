@@ -258,9 +258,10 @@ class PlotHovmollerSubtask(AnalysisTask):
             z = np.zeros(depths.shape)
             z[0] = -0.5 * depths[0]
             z[1:] = -0.5 * (depths[0:-1] + depths[1:])
+            z = xr.DataArray(dims='nVertLevels', data=z)
 
-        Time = ds.Time.values
-        field = ds[self.mpasFieldName].values.transpose()
+        Time = ds.Time
+        field = ds[self.mpasFieldName]
 
         xLabel = 'Time (years)'
         yLabel = 'Depth (m)'
@@ -289,9 +290,9 @@ class PlotHovmollerSubtask(AnalysisTask):
 
         plot_vertical_section(config, Time, z, field, self.sectionName,
                               suffix='', colorbarLabel=self.unitsLabel,
-                              title=title, xlabel=xLabel, ylabel=yLabel,
+                              title=title, xlabels=xLabel, ylabel=yLabel,
                               lineWidth=1,
-                              xArrayIsTime=True, calendar=self.calendar,
+                              xCoordIsTime=True, calendar=self.calendar,
                               firstYearXTicks=firstYearXTicks,
                               yearStrideXTicks=yearStrideXTicks,
                               yLim=yLim, invertYAxis=False)
