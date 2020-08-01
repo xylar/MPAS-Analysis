@@ -32,12 +32,13 @@ from mpas_analysis.shared.plot.ticks import plot_xtick_format
 
 def plot_vertical_section_comparison(
         config,
-        xCoords,
-        zCoord,
         modelArray,
         refArray,
         diffArray,
         colorMapSectionName,
+        xCoords=None,
+        zCoord=None,
+        dsTransectTriangles=None,
         colorbarLabel=None,
         xlabels=None,
         ylabel=None,
@@ -89,22 +90,28 @@ def plot_vertical_section_comparison(
         the configuration, containing a [plot] section with options that
         control plotting
 
-    xCoords : xarray.DataArray or list of xarray.DataArray
-       The x coordinate(s) in ``field``.  Optional second
+    modelArray, refArray : xarray.DataArray
+        model and observational or control run data sets
+
+    diffArray : float array
+        difference between modelArray and refArray
+
+    xCoords : xarray.DataArray or list of xarray.DataArray, optional
+       The x coordinate(s) for the model, ref and diff arrays.  Optional second
        and third entries will be used for a second and third x axis above the
        plot.  The typical use for the second and third axis is for transects,
        for which the primary x axis represents distance along a transect, and
        the second and third x axes are used to display the corresponding
        latitudes and longitudes.
 
-    zCoord : xarray.DataArray
-        The z coordinates in ``field``
+    zCoord : xarray.DataArray, optional
+        The z coordinates for the model, ref and diff arrays
 
-    modelArray, refArray : xarray.DataArray
-        model and observational or control run data sets
-
-    diffArray : float array
-        difference between modelArray and refArray
+    dsTransectTriangles : xarray.Dataset, optional
+        A dataset defining the transect on triangles rather than as a logically
+        rectangular grid.  If this option is provided, ``xCoords`` is only
+        used for tick marks if more than one x axis is requested, and
+        ``zCoord`` will be ignored.
 
     colorMapSectionName : str
         section name in ``config`` where color map info can be found.
@@ -347,10 +354,11 @@ def plot_vertical_section_comparison(
 
     _, ax = plot_vertical_section(
         config,
-        xCoords,
-        zCoord,
         modelArray,
         colorMapSectionName,
+        xCoords=xCoords,
+        zCoord=zCoord,
+        dsTransectTriangles=dsTransectTriangles,
         suffix=resultSuffix,
         colorbarLabel=colorbarLabel,
         title=title,
@@ -390,10 +398,11 @@ def plot_vertical_section_comparison(
         plt.subplot(3, 1, 2)
         _, ax = plot_vertical_section(
             config,
-            xCoords,
-            zCoord,
             refArray,
             colorMapSectionName,
+            xCoords=xCoords,
+            zCoord=zCoord,
+            dsTransectTriangles=dsTransectTriangles,
             suffix=resultSuffix,
             colorbarLabel=colorbarLabel,
             title=refTitle,
@@ -427,10 +436,11 @@ def plot_vertical_section_comparison(
         plt.subplot(3, 1, 3)
         _, ax = plot_vertical_section(
             config,
-            xCoords,
-            zCoord,
             diffArray,
             colorMapSectionName,
+            xCoords=xCoords,
+            zCoord=zCoord,
+            dsTransectTriangles=dsTransectTriangles,
             suffix=diffSuffix,
             colorbarLabel=colorbarLabel,
             title=diffTitle,
@@ -474,10 +484,11 @@ def plot_vertical_section_comparison(
 
 def plot_vertical_section(
         config,
-        xCoords,
-        zCoord,
         field,
         colorMapSectionName,
+        xCoords=None,
+        zCoord=None,
+        dsTransectTriangles=None,
         suffix='',
         colorbarLabel=None,
         title=None,
@@ -529,17 +540,6 @@ def plot_vertical_section(
         the configuration, containing a [plot] section with options that
         control plotting
 
-    xCoords : xarray.DataArray or list of xarray.DataArray
-        The x coordinate(s) in ``field``.  Optional second
-        and third entries will be used for a second and third x axis above the
-        plot.  The typical use for the second and third axis is for transects,
-        for which the primary x axis represents distance along a transect, and
-        the second and third x axes are used to display the corresponding
-        latitudes and longitudes.
-
-    zCoord : xarray.DataArray
-        The z coordinates in ``field``
-
     field : xarray.DataArray
         field array to plot.  For contour plots, ``xCoords`` and ``zCoords``
         should broadcast to the same shape as ``field``.  For heatmap plots,
@@ -551,6 +551,23 @@ def plot_vertical_section(
 
     colorMapSectionName : str
         section name in ``config`` where color map info can be found.
+
+    xCoords : xarray.DataArray or list of xarray.DataArray, optional
+       The x coordinate(s) for the ``field``.  Optional second
+       and third entries will be used for a second and third x axis above the
+       plot.  The typical use for the second and third axis is for transects,
+       for which the primary x axis represents distance along a transect, and
+       the second and third x axes are used to display the corresponding
+       latitudes and longitudes.
+
+    zCoord : xarray.DataArray, optional
+        The z coordinates for the ``field``
+
+    dsTransectTriangles : xarray.Dataset, optional
+        A dataset defining the transect on triangles rather than as a logically
+        rectangular grid.  If this option is provided, ``xCoords`` is only
+        used for tick marks if more than one x axis is requested, and
+        ``zCoord`` will be ignored.
 
     suffix : str, optional
         the suffix used for colorbar config options
@@ -713,44 +730,55 @@ def plot_vertical_section(
     # -------
     # Milena Veneziani, Mark Petersen, Xylar Asay-Davis, Greg Streletz
 
-    if not isinstance(xCoords, list):
-        xCoords = [xCoords]
+    mask = field.notnull()
+    if xCoords is not None:
+        if not isinstance(xCoords, list):
+            xCoords = [xCoords]
 
-    if not isinstance(xlabels, list):
-        xlabels = [xlabels]
+        if not isinstance(xlabels, list):
+            xlabels = [xlabels]
 
-    if len(xCoords) != len(xlabels):
-        raise ValueError('Expected the same number of xCoords and xlabels')
+        if len(xCoords) != len(xlabels):
+            raise ValueError('Expected the same number of xCoords and xlabels')
 
-    x, y = xr.broadcast(xCoords[0], zCoord)
-    dims_in_field = all([dim in field.dims for dim in x.dims])
+    if dsTransectTriangles is None:
 
-    if dims_in_field:
-        x = x.transpose(*field.dims)
-        y = y.transpose(*field.dims)
-    else:
-        xsize = list(x.sizes.values())
-        fieldsize = list(field.sizes.values())
-        if xsize[0] == fieldsize[0] + 1 and xsize[1] == fieldsize[1] + 1:
-            pass
-        elif xsize[0] == fieldsize[1] + 1 and xsize[1] == fieldsize[0] + 1:
-            x = x.transpose(x.dims[1], x.dims[0])
-            y = y.transpose(y.dims[1], y.dims[0])
+        x, y = xr.broadcast(xCoords[0], zCoord)
+        dims_in_field = all([dim in field.dims for dim in x.dims])
+
+        if dims_in_field:
+            x = x.transpose(*field.dims)
+            y = y.transpose(*field.dims)
         else:
-            raise ValueError('Sizes of coords {}x{} and field {}x{} not '
-                             'compatible.'.format(xsize[0], xsize[1],
-                                                  fieldsize[0], fieldsize[1]))
+            xsize = list(x.sizes.values())
+            fieldsize = list(field.sizes.values())
+            if xsize[0] == fieldsize[0] + 1 and xsize[1] == fieldsize[1] + 1:
+                pass
+            elif xsize[0] == fieldsize[1] + 1 and xsize[1] == fieldsize[0] + 1:
+                x = x.transpose(x.dims[1], x.dims[0])
+                y = y.transpose(y.dims[1], y.dims[0])
+            else:
+                raise ValueError('Sizes of coords {}x{} and field {}x{} not '
+                                 'compatible.'.format(xsize[0], xsize[1],
+                                                      fieldsize[0],
+                                                      fieldsize[1]))
 
-    # compute moving averages with respect to the x dimension
-    if movingAveragePoints is not None and movingAveragePoints != 1:
+        # compute moving averages with respect to the x dimension
+        if movingAveragePoints is not None and movingAveragePoints != 1:
 
-        dim = field.dims[0]
-        field = field.rolling(dim={dim: movingAveragePoints},
-                              center=True).mean().dropna(dim)
-        x = x.rolling(dim={dim: movingAveragePoints},
-                      center=True).mean().dropna(dim)
-        y = y.rolling(dim={dim: movingAveragePoints},
-                      center=True).mean().dropna(dim)
+            dim = field.dims[0]
+            field = field.rolling(dim={dim: movingAveragePoints},
+                                  center=True).mean().dropna(dim)
+            x = x.rolling(dim={dim: movingAveragePoints},
+                          center=True).mean().dropna(dim)
+            y = y.rolling(dim={dim: movingAveragePoints},
+                          center=True).mean().dropna(dim)
+
+        maskedTriangulation, unmaskedTriangulation = _get_triangulation(
+            x, y, mask)
+    else:
+        maskedTriangulation, unmaskedTriangulation = _get_ds_triangulation(
+            dsTransectTriangles, mask)
 
     # set up figure
     if dpi is None:
@@ -760,10 +788,9 @@ def plot_vertical_section(
     else:
         fig = plt.gcf()
 
-    colormapDict = setup_colormap(config, colorMapSectionName, suffix=suffix)
+    colormapDict = setup_colormap(config, colorMapSectionName,
+                                  suffix=suffix)
 
-    mask = field.notnull()
-    maskedTriangulation, unmaskedTriangulation = _get_triangulation(x, y, mask)
     if not plotAsContours:
         # display a heatmap of fieldArray
         fieldMasked = field.where(mask, 0.0).values.ravel()
@@ -794,12 +821,12 @@ def plot_vertical_section(
         zeroArray = xr.zeros_like(field)
         plt.tricontourf(maskedTriangulation, zeroArray.values, colors='white')
 
+    ax = plt.gca()
     if outlineValid:
         # set the color for NaN or masked regions, and draw a black
         # outline around them; technically, the contour level used should
         # be 1.0, but the contours don't show up when using 1.0, so 0.999
         # is used instead
-        ax = plt.gca()
         ax.set_facecolor(backgroundColor)
         landMask = np.isnan(field.values).ravel()
         plt.tricontour(unmaskedTriangulation, landMask, levels=[0.0001],
@@ -874,7 +901,7 @@ def plot_vertical_section(
     if yLim:
         ax.set_ylim(yLim)
 
-    if xCoordIsTime:
+    if xCoords is not None and xCoordIsTime:
         if firstYearXTicks is None:
             minDays = xCoords[0][0].values
         else:
@@ -885,7 +912,7 @@ def plot_vertical_section(
                           yearStride=yearStrideXTicks)
 
     # add a second x-axis scale, if it was requested
-    if len(xCoords) >= 2:
+    if xCoords is not None and len(xCoords) >= 2:
         ax2 = ax.twiny()
         ax2.set_facecolor(backgroundColor)
         if xlabels[1] is not None:
@@ -918,6 +945,29 @@ def plot_vertical_section(
                 ax3.spines['top'].set_position(('outward', 36))
 
     return fig, ax  # }}}
+
+
+def _get_ds_triangulation(dsTransectTriangles, mask):
+    """get matplotlib Triangulation from triangulation dataset"""
+
+    triMask = np.logical_not(mask)
+    # if any node of a triangle is masked, the triangle is masked
+    triMask = triMask.max(dim='nTriangleNodes')
+
+    nTransectTriangles = dsTransectTriangles.sizes['nTransectTriangles']
+    dNode = dsTransectTriangles.dNode.isel(
+        nSegments=dsTransectTriangles.segmentIndices,
+        nHorizBounds=dsTransectTriangles.nodeHorizBoundsIndices)
+    x = dNode.values.ravel()
+
+    zTransectNode = dsTransectTriangles.zTransectNode
+    y = zTransectNode.values.ravel()
+
+    tris = np.arange(3 * nTransectTriangles).reshape((nTransectTriangles, 3))
+    maskedTriangulation = Triangulation(x=x, y=y, triangles=tris, mask=triMask)
+    unmaskedTriangulation = Triangulation(x=x, y=y, triangles=tris)
+
+    return maskedTriangulation, unmaskedTriangulation
 
 
 def _get_triangulation(x, y, mask):
