@@ -730,7 +730,6 @@ def plot_vertical_section(
     # -------
     # Milena Veneziani, Mark Petersen, Xylar Asay-Davis, Greg Streletz
 
-    mask = field.notnull()
     if xCoords is not None:
         if not isinstance(xCoords, list):
             xCoords = [xCoords]
@@ -774,9 +773,11 @@ def plot_vertical_section(
             y = y.rolling(dim={dim: movingAveragePoints},
                           center=True).mean().dropna(dim)
 
+        mask = field.notnull()
         maskedTriangulation, unmaskedTriangulation = _get_triangulation(
             x, y, mask)
     else:
+        mask = field.notnull()
         maskedTriangulation, unmaskedTriangulation = _get_ds_triangulation(
             dsTransectTriangles, mask)
 

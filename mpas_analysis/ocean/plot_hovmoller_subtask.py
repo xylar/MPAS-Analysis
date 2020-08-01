@@ -361,10 +361,10 @@ class PlotHovmollerSubtask(AnalysisTask):
             diffTitle = 'Main - Control'
 
         fig, _, suptitle = plot_vertical_section_comparison(
-            config, Time, z, field, refField, diff, self.sectionName,
-            colorbarLabel=self.unitsLabel, title=title, modelTitle=mainRunName,
-            refTitle=refTitle, diffTitle=diffTitle, xlabels=xLabel,
-            ylabel=yLabel, lineWidth=1, xCoordIsTime=True,
+            config, field, refField, diff, self.sectionName, xCoords=Time,
+            zCoord=z, colorbarLabel=self.unitsLabel, title=title,
+            modelTitle=mainRunName, refTitle=refTitle, diffTitle=diffTitle,
+            xlabels=xLabel, ylabel=yLabel, lineWidth=1, xCoordIsTime=True,
             movingAveragePoints=movingAverageMonths, calendar=self.calendar,
             firstYearXTicks=firstYearXTicks, yearStrideXTicks=yearStrideXTicks,
             yLim=yLim, invertYAxis=False)
