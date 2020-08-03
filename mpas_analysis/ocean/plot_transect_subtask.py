@@ -638,7 +638,6 @@ class PlotTransectSubtask(AnalysisTask):  # {{{
 
         # }}}
 
-
     def _lat_greater_extent(self, lat, lon):
         # {{{
         """
