@@ -1221,6 +1221,12 @@ class PlotRegionTimeSeriesSubtask(AnalysisTask):
             # and cartopy doesn't play too well with tight_layout anyway
             plt.tight_layout()
 
+            # add a vertical dashed line at year 55
+            ax = plt.gca()
+            ylim = ax.get_ylim()
+            ax.plot(54*365.*numpy.ones(2), ylim, 'k--', linewidth=1.8)
+            ax.set_ylim(ylim)
+
             add_inset(fig, fc, width=2.0, height=2.0)
 
             savefig(outFileName, tight=False)
