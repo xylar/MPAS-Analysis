@@ -4,7 +4,7 @@
 #SBATCH --qos=premium
 #SBATCH -C haswell
 #SBATCH --nodes=1
-#SBATCH --time=4:00:00
+#SBATCH --time=1:00:00
 #SBATCH --account=e3sm
 #SBATCH --job-name=mpas_analysis
 #SBATCH --output=mpas_analysis.o%j
@@ -13,8 +13,9 @@
 
 export OMP_NUM_THREADS=1
 
-source /global/cfs/cdirs/e3sm/software/anaconda_envs/load_test_e3sm_unified.sh
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate mpas-analysis
 export HDF5_USE_FILE_LOCKING=FALSE
 
-srun -N 1 -n 1 python -m mpas_analysis configs/polarRegions.conf B-ISMF-hovmoller.cfg
+srun -N 1 -n 1 python -m mpas_analysis configs/polarRegions.conf yrs71-100/B-ISMF_vs_B-MGM.cfg
 
