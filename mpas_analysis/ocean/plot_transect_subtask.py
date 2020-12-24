@@ -557,8 +557,8 @@ class PlotTransectSubtask(AnalysisTask):  # {{{
             contourLabelPrecision=contourLabelPrecision)
 
         # shift the super-title a little to the left to make room for the inset
-        pos = suptitle.get_position()
-        suptitle.set_position((pos[0] - 0.05, pos[1]))
+#        pos = suptitle.get_position()
+#        suptitle.set_position((pos[0] - 0.05, pos[1]))
 
         # make a red start axis and green end axis to correspond to the dots
         # in the inset
@@ -568,7 +568,7 @@ class PlotTransectSubtask(AnalysisTask):  # {{{
             ax.spines['left'].set_linewidth(4)
             ax.spines['right'].set_linewidth(4)
 
-        add_inset(fig, fc, width=1.5, height=1.5, xbuffer=0.1, ybuffer=0.1)
+#        add_inset(fig, fc, width=1.5, height=1.5, xbuffer=0.1, ybuffer=0.1)
 
         savefig(outFileName, tight=False)
 

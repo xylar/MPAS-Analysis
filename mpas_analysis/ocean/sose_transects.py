@@ -158,7 +158,9 @@ class SoseTransects(AnalysisTask):  # {{{
 
             refTitleLabel = 'State Estimate (SOSE)'
 
-            diffTitleLabel = 'Model - State Estimate'
+#            diffTitleLabel = 'Model - State Estimate'
+#            diffTitleLabel = 'B-ISMF - State Estimate'
+            diffTitleLabel = 'B-MGM - State Estimate'
 
         else:
             controlRunName = controlConfig.get('runs', 'mainRunName')
