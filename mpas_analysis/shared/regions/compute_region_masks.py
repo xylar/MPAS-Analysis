@@ -51,7 +51,7 @@ class ComputeRegionMasks(AnalysisTask):
         self.regionMaskSubtasks = {}
 
     def add_mask_subtask(self, regionGroup, obsFileName=None, lonVar='lon',
-                         latVar='lat', meshName=None, useMpasMaskCreator=True):
+                         latVar='lat', meshName=None, useMpasMaskCreator=None):
         """
         Construct the analysis task and adds it as a subtask of the
         ``parentTask``.
@@ -84,6 +84,10 @@ class ComputeRegionMasks(AnalysisTask):
         # Xylar Asay-Davis
 
         config = self.config
+
+        if useMpasMaskCreator is None:
+            useMpasMaskCreator = config.getboolean('computeRegionMasks',
+                                                   'useMpasMaskCreator')
 
         if meshName is None:
             meshName = config.get('input', 'mpasMeshName')

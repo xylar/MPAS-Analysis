@@ -326,6 +326,13 @@ useCartopyCoastline = True
 generate = True
 
 
+[computeRegionMasks]
+## options related to computing region masks
+
+# whether to use to MPAS-Tools mask creator by default
+useMpasMaskCreator = False
+
+
 [oceanObservations]
 ## options related to ocean observations with which the results will be
 ## compared
