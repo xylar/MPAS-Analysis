@@ -21,7 +21,7 @@ import mpas_tools.conversion
 
 from geometric_features import read_feature_collection, GeometricFeatures
 from geometric_features.aggregation.ocean import basins, subbasins, antarctic, \
-    ice_shelves
+    ice_shelves, ismip6
 from geometric_features.aggregation.ocean import arctic as arctic_ocean
 from geometric_features.aggregation.seaice import arctic as arctic_seaice
 
@@ -77,7 +77,10 @@ def get_region_info(regionGroup, config):
                                'function': ice_shelves},
                'Ocean Subbasins': {'prefix': 'oceanSubbasins',
                                    'date': '20201123',
-                                   'function': subbasins}}
+                                   'function': subbasins},
+               'ISMIP6 Regions': {'prefix': 'ismip6Regions',
+                                  'date': '20210201',
+                                  'function': ismip6}}
 
     if regionGroup not in regions:
         raise ValueError('Unknown region group {}'.format(regionGroup))
