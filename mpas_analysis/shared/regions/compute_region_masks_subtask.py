@@ -234,6 +234,54 @@ def compute_lon_lat_region_masks(geojsonFileName, lon, lat, maskFileName,
     write_netcdf(dsMasks, maskFileName)
 
 
+def compute_projection_grid_region_masks(geojsonFileName, lon, lat,
+                                         maskFileName, featureList=None,
+                                         logger=None, processCount=1,
+                                         chunkSize=1000, showProgress=True):
+    """
+    Build a region mask file from the given 2D lon and lat xarray.DataArrays,
+    and geojson file defining a set of regions.
+    """
+    if os.path.exists(maskFileName):
+        return
+
+    # make sure -180 <= lon < 180
+    lon = numpy.mod(lon + 180., 360.) - 180.
+
+    # create shapely geometry for lonCell and latCell
+    cellPoints = [shapely.geometry.Point(x, y) for x, y in
+                  zip(lon.values.ravel(), lat.values.ravel())]
+
+    regionNames, masks, properties, nChar = compute_region_masks(
+        geojsonFileName, cellPoints, maskFileName, featureList, logger,
+        processCount, chunkSize, showProgress)
+
+    # create a new data array for masks and another for mask names
+    if logger is not None:
+        logger.info('  Creating and writing masks dataset...')
+    nRegions = len(regionNames)
+    dsMasks = xr.Dataset()
+
+    lonSizes = (lon.sizes[lon.dims[0]], lon.sizes[lon.dims[1]])
+    maskDims = ('nRegions', lon.dims[0], lon.dims[1])
+    maskSizes = (nRegions, lonSizes[0], lonSizes[1])
+    dsMasks['regionCellMasks'] = (maskDims, numpy.zeros(maskSizes, dtype=bool))
+    dsMasks['regionNames'] = \
+        (('nRegions',), numpy.zeros((nRegions,), dtype='|S{}'.format(nChar)))
+
+    for index in range(nRegions):
+        regionName = regionNames[index]
+        mask = masks[index].reshape(lonSizes)
+        dsMasks['regionCellMasks'][index, :] = mask
+        dsMasks['regionNames'][index] = regionName
+
+    for propertyName in properties:
+        dsMasks['{}Regions'.format(propertyName)] = \
+            (('nRegions',), properties[propertyName])
+
+    write_netcdf(dsMasks, maskFileName)
+
+
 def compute_region_masks(geojsonFileName, cellPoints, maskFileName,
                          featureList=None, logger=None, processCount=1,
                          chunkSize=1000, showProgress=True):
@@ -337,8 +385,10 @@ def compute_region_masks(geojsonFileName, cellPoints, maskFileName,
 
 
 def _contains(shape, cellPoints):
-    mask = numpy.array([shape.contains(point) for point in cellPoints],
-                       dtype=bool)
+    mask = numpy.array(
+        [(shape.contains(point) or shape.intersects(point)) for point in
+         cellPoints],
+        dtype=bool)
     return mask
 
 
