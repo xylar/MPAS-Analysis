@@ -317,11 +317,7 @@ class ComputeRegionDepthMasksSubtask(AnalysisTask):  # {{{
         zMid = compute_zmid(dsRestart.bottomDepth, dsRestart.maxLevelCell,
                             dsRestart.layerThickness)
         areaCell = dsRestart.areaCell
-        if 'landIceMask' in dsRestart:
-            # only the region outside of ice-shelf cavities
-            openOceanMask = dsRestart.landIceMask == 0
-        else:
-            openOceanMask = None
+        openOceanMask = None
 
         regionMaskFileName = self.masksSubtask.maskFileName
         dsRegionMask = xarray.open_dataset(regionMaskFileName)
