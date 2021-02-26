@@ -77,7 +77,10 @@ def get_region_info(regionGroup, config):
                                'function': ice_shelves},
                'Ocean Subbasins': {'prefix': 'oceanSubbasins',
                                    'date': '20201123',
-                                   'function': subbasins}}
+                                   'function': subbasins},
+               'Weddell Shelf Regions': {'prefix': 'weddellShelfRegions',
+                                         'date': '20210226',
+                                         'function': None}}
 
     if regionGroup not in regions:
         raise ValueError('Unknown region group {}'.format(regionGroup))
