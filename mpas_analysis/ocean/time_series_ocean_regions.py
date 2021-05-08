@@ -626,16 +626,17 @@ class ComputeRegionTimeSeriesSubtask(AnalysisTask):  # {{{
             datasets.append(innerDatasets)
 
         # combine data sets into a single data set
-        dsOut = xarray.combine_nested(datasets, ['Time', 'nRegions'])
+        dsOut = xarray.combine_nested(datasets, ['Time', 'nRegions'],
+                                      combine_attrs='identical')
 
         dsOut['totalArea'] = dsRegionMask.totalArea
         dsOut.totalArea.attrs['units'] = 'm^2'
         dsOut['zbounds'] = dsRegionMask.zbounds
         dsOut.zbounds.attrs['units'] = 'm'
         dsOut.coords['regionNames'] = dsRegionMask.regionNames
-        dsOut.coords['year'] = (('Time'), years)
+        dsOut.coords['year'] = (('Time',), years)
         dsOut['year'].attrs['units'] = 'years'
-        dsOut.coords['month'] = (('Time'), months)
+        dsOut.coords['month'] = (('Time',), months)
         dsOut['month'].attrs['units'] = 'months'
 
         write_netcdf(dsOut, outFileName)  # }}}
@@ -1140,7 +1141,7 @@ class PlotRegionTimeSeriesSubtask(AnalysisTask):
         for var in self.variables:
             varName = var['name']
             mainArray = dsIn[varName]
-            is3d = mainArray.attrs['is3d'] == 'True'
+            is3d = var['is3d']
             if is3d:
                 title = 'Volume-Mean {} in {}'.format(
                     var['title'],  self.regionName)

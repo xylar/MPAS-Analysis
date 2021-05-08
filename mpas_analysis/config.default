@@ -1287,19 +1287,23 @@ regionNames = []
 variables = [{'name': 'temperature',
               'title': 'Temperature',
               'units': r'$^\circ$C',
-              'mpas': 'timeMonthly_avg_activeTracers_temperature'},
+              'mpas': 'timeMonthly_avg_activeTracers_temperature',
+              'is3d': True},
              {'name': 'salinity',
               'title': 'Salinity',
               'units': 'PSU',
-              'mpas': 'timeMonthly_avg_activeTracers_salinity'},
+              'mpas': 'timeMonthly_avg_activeTracers_salinity',
+              'is3d': True},
              {'name': 'potentialDensity',
               'title': 'Potential Density',
               'units': 'kg m$^{-3}$',
-              'mpas': 'timeMonthly_avg_potentialDensity'},
+              'mpas': 'timeMonthly_avg_potentialDensity',
+              'is3d': True},
              {'name': 'mixedLayerDepth',
               'title': 'Mixed Layer Depth',
               'units': 'm',
-              'mpas': 'timeMonthly_avg_dThreshMLD'}]
+              'mpas': 'timeMonthly_avg_dThreshMLD,
+              'is3d': False'}]
 
 # The minimum and maximum depth over which fields are averaged, default is
 # to take these values from the geojson feature's zmin and zmax properties.
