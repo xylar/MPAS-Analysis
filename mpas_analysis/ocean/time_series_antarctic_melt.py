@@ -354,10 +354,10 @@ class ComputeMeltSubtask(AnalysisTask):  # {{{
 
         dsOut = xarray.concat(objs=datasets, dim='Time')
         dsOut['regionNames'] = dsRegionMask.regionNames
-        dsOut.totalMeltFlux.attrs['units'] = 'GT a$^{-1}$'
+        dsOut.totalMeltFlux.attrs['units'] = 'GT yr$^{-1}$'
         dsOut.totalMeltFlux.attrs['description'] = \
             'Total melt flux summed over each ice shelf or region'
-        dsOut.meltRates.attrs['units'] = 'm a$^{-1}$'
+        dsOut.meltRates.attrs['units'] = 'm yr$^{-1}$'
         dsOut.meltRates.attrs['description'] = \
             'Melt rate averaged over each ice shelf or region'
 

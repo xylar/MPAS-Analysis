@@ -161,7 +161,7 @@ class ClimatologyMapAntarcticMelt(AnalysisTask):  # {{{
                     refFieldName=refFieldName,
                     refTitleLabel=refTitleLabel,
                     diffTitleLabel=diffTitleLabel,
-                    unitsLabel=r'm a$^{-1}$',
+                    unitsLabel=r'm yr$^{-1}$',
                     imageCaption='Antarctic Melt Rate',
                     galleryGroup='Melt Rate',
                     groupSubtitle=None,
@@ -460,11 +460,11 @@ class AntarcticMeltTableSubtask(AnalysisTask):
 
                 ds = xr.Dataset()
                 ds['totalMeltFlux'] = totalMeltFlux
-                ds.totalMeltFlux.attrs['units'] = 'GT a$^{-1}$'
+                ds.totalMeltFlux.attrs['units'] = 'GT yr$^{-1}$'
                 ds.totalMeltFlux.attrs['description'] = \
                     'Total melt flux summed over each ice shelf or region'
                 ds['meltRates'] = meltRates
-                ds.meltRates.attrs['units'] = 'm a$^{-1}$'
+                ds.meltRates.attrs['units'] = 'm yr$^{-1}$'
                 ds.meltRates.attrs['description'] = \
                     'Melt rate averaged over each ice shelf or region'
 
