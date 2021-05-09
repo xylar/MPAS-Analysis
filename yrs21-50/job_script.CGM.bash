@@ -3,7 +3,7 @@
 #SBATCH --qos=premium
 #SBATCH -C haswell
 #SBATCH --nodes=1
-#SBATCH --time=4:00:00
+#SBATCH --time=2:00:00
 #SBATCH --account=m3412
 #SBATCH --job-name=mpas_analysis
 #SBATCH --output=mpas_analysis_cgm.o%j

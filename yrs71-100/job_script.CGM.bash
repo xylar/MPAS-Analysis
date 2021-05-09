@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#SBATCH --qos=regular
+#SBATCH --qos=premium
 #SBATCH -C haswell
 #SBATCH --nodes=1
 #SBATCH --time=12:00:00

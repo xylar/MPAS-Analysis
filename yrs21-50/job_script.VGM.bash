@@ -16,5 +16,5 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate mpas_dev
 export HDF5_USE_FILE_LOCKING=FALSE
 
-srun -N 1 -n 1 mpas_analysis configs/polarRegions.conf yrs21-50/VGM.cfg
+srun -N 1 -n 1 mpas_analysis revisions.cfg yrs21-50/VGM.cfg
 

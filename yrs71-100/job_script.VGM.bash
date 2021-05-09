@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#SBATCH --qos=regular
+#SBATCH --qos=premium
 #SBATCH -C haswell
 #SBATCH --nodes=1
 #SBATCH --time=12:00:00
@@ -16,5 +16,5 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate mpas_dev
 export HDF5_USE_FILE_LOCKING=FALSE
 
-srun -N 1 -n 1 mpas_analysis configs/polarRegions.conf yrs71-100/VGM.cfg
+srun -N 1 -n 1 mpas_analysis revisions.cfg yrs71-100/VGM.cfg
 
