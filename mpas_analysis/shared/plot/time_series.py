@@ -165,7 +165,7 @@ def timeseries_analysis_plot(config, dsvalues, calendar, title, xlabel, ylabel,
             label = legendText[dsIndex]
             if label is not None:
                 label = limit_title(label, maxTitleLength)
-            labelCount += 1
+                labelCount += 1
         if lineColors is None:
             color = 'k'
         else:
@@ -220,7 +220,8 @@ def timeseries_analysis_plot(config, dsvalues, calendar, title, xlabel, ylabel,
                     boxHalfHeight * np.array([-1, -1, 1, 1, -1])
 
                 plt.plot(boxX, boxY, '-', color=color, linewidth=3)
-                labelCount += 1
+                if obsLegend[iObs] is not None:
+                    labelCount += 1
 
     if labelCount > 1:
         plt.legend(loc=legendLocation)

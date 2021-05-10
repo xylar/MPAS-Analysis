@@ -676,9 +676,11 @@ class PlotMeltSubtask(AnalysisTask):
         else:
             defaultFontSize = None
 
+        obsLegend = list(obsDict.keys())
         if self.iceShelf != 'Antarctica' and self.iceShelf != 'Filchner':
             # we only need the legend in those 2
             legendText = None
+            obsLegend = [None for _ in obsDict]
 
         fig = timeseries_analysis_plot(config, fields, calendar=calendar,
                                        title=title, xlabel=xLabel,
@@ -692,7 +694,7 @@ class PlotMeltSubtask(AnalysisTask):
                                        defaultFontSize=defaultFontSize,
                                        obsMean=obsMeltFlux,
                                        obsUncertainty=obsMeltFluxUnc,
-                                       obsLegend=list(obsDict.keys()),
+                                       obsLegend=obsLegend,
                                        firstYearXTicks=firstYearXTicks,
                                        yearStrideXTicks=yearStrideXTicks)
 
