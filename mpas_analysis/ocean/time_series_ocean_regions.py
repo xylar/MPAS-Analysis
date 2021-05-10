@@ -1219,7 +1219,7 @@ class PlotRegionTimeSeriesSubtask(AnalysisTask):
                 ylabel=yLabel, movingAveragePoints=movingAverageMonths,
                 lineColors=lineColors, lineWidths=lineWidths,
                 legendText=legendText, titleFontSize=titleFontSize,
-                defaultFontSize=defaultFontSize)
+                defaultFontSize=defaultFontSize, legendLocation='upper left')
 
             # do this before the inset because otherwise it moves the inset
             # and cartopy doesn't play too well with tight_layout anyway
