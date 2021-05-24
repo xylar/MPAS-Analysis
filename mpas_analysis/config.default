@@ -225,9 +225,13 @@ comparisonAntarcticStereoResolution = 10.
 comparisonArcticStereoWidth = 6000.
 comparisonArcticStereoResolution = 10.
 
-# interpolation order for model and observation results. Likely values are
+# interpolation order for model results. Supported values are
 #   'bilinear', 'neareststod' (nearest neighbor) or 'conserve'
 mpasInterpolationMethod = bilinear
+
+# extrapolaton method for model results (if any). Possible values are
+#   'neareststod', 'nearestidavg', or 'creep'
+# mpasExtrapolationMethod = neareststod
 
 # should climatologies be performed with ncclimo or with xarray/dask
 useNcclimo = True

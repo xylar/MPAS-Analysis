@@ -38,7 +38,8 @@ from mpas_analysis.shared.climatology.comparison_descriptors import \
 
 
 def get_remapper(config, sourceDescriptor, comparisonDescriptor,
-                 mappingFilePrefix, method, logger=None):  # {{{
+                 mappingFilePrefix, method, logger=None,
+                 extrap_method=None):  # {{{
     """
     Given config options and descriptions of the source and comparison grids,
     returns a ``pyremap.Remapper`` object that can be used to remap from source
@@ -66,6 +67,9 @@ def get_remapper(config, sourceDescriptor, comparisonDescriptor,
 
     logger : ``logging.Logger``, optional
         A logger to which ncclimo output should be redirected
+
+    extrap_method : {'neareststod', 'nearestidavg','creep'}, optional
+        The method used to extrapolate unmapped destination locations
 
     Returns
     -------
@@ -128,7 +132,8 @@ def get_remapper(config, sourceDescriptor, comparisonDescriptor,
     make_directories(mappingSubdirectory)
     with TemporaryDirectory(dir=mappingSubdirectory) as tempdir:
         remapper.build_mapping_file(method=method, logger=logger,
-                                    mpiTasks=mpiTasks, tempdir=tempdir)
+                                    mpiTasks=mpiTasks, tempdir=tempdir,
+                                    extrap_method=extrap_method)
 
     return remapper  # }}}
 

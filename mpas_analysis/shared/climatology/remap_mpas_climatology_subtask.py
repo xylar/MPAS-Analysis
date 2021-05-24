@@ -419,12 +419,18 @@ class RemapMpasClimatologySubtask(AnalysisTask):  # {{{
                                                           'mpasMeshName'))
             self.mpasMeshName = mpasDescriptor.meshName
 
+            if config.has_option('climatology', 'mpasExtrapolationMethod'):
+                extrap_method = \
+                    config.get('climatology', 'mpasExtrapolationMethod')
+            else:
+                extrap_method = None
+
             self.remappers[comparisonGridName] = get_remapper(
                 config=config, sourceDescriptor=mpasDescriptor,
                 comparisonDescriptor=comparisonDescriptor,
                 mappingFilePrefix=mappingFilePrefix,
                 method=config.get('climatology', 'mpasInterpolationMethod'),
-                logger=self.logger)
+                logger=self.logger, extrap_method=extrap_method)
 
         # }}}
 
