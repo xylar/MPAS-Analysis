@@ -546,16 +546,19 @@ def plot_polar_projection_comparison(
         ax.set_extent(extent, crs=projection)
 
         gl = ax.gridlines(crs=cartopy.crs.PlateCarree(), color='k',
-                          linestyle=':', zorder=5, draw_labels=True)
-        gl.xlocator = mticker.FixedLocator(np.arange(-180., 181., 30.))
-        gl.ylocator = mticker.FixedLocator(np.arange(-80., 81., 10.))
+                          linestyle=':', zorder=5, draw_labels=False)
+        gl.xlocator = mticker.FixedLocator(np.arange(-180., 181., 10.))
+        gl.ylocator = mticker.FixedLocator(np.arange(-88., 81., 2.))
         gl.n_steps = 100
-        gl.right_labels = False
-        gl.left_labels = False
+        gl.rotate_labels = False
+        gl.x_inline = False
+        gl.y_inline = False
         gl.xformatter = cartopy.mpl.gridliner.LONGITUDE_FORMATTER
         gl.yformatter = cartopy.mpl.gridliner.LATITUDE_FORMATTER
         gl.xlabel_style['size'] = cartopyGridFontSize
         gl.ylabel_style['size'] = cartopyGridFontSize
+        gl.left_labels = False
+        gl.right_labels = False
 
         if levels is None:
             plotHandle = ax.pcolormesh(x, y, array, cmap=colormap, norm=norm,
