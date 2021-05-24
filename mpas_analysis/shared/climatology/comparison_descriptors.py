@@ -56,6 +56,9 @@ def get_comparison_descriptor(config, comparisonGridName):  # {{{
     elif comparisonGridName == 'arctic':
         comparisonDescriptor = \
             _get_arctic_stereographic_comparison_descriptor(config)
+    elif comparisonGridName == 'fris':
+        comparisonDescriptor = \
+            _get_fris_stereographic_comparison_descriptor(config)
     else:
         raise ValueError('Unknown comaprison grid type {}'.format(
             comparisonGridName))
@@ -136,6 +139,42 @@ def _get_lat_lon_comparison_descriptor(config):  # {{{
     descriptor = LatLonGridDescriptor.create(lat, lon, units='degrees')
 
     return descriptor  # }}}
+
+
+def _get_fris_stereographic_comparison_descriptor(config):  # {{{
+    """
+    Get a descriptor of a region of a polar stereographic grid centered on the
+    Filchner-Ronne Ice Shelf, used for remapping and determining the grid name
+
+    Parameters
+    ----------
+    config :  instance of ``MpasAnalysisConfigParser``
+        Contains configuration options
+
+    Returns
+    -------
+    descriptor : ``ProjectionGridDescriptor`` object
+        A descriptor of the FRIS comparison grid
+    """
+    # Authors
+    # -------
+    # Xylar Asay-Davis
+
+    climSection = 'climatology'
+
+    x = config.getExpression(climSection, 'comparisonFrisX', usenumpyfunc=True)
+    y = config.getExpression(climSection, 'comparisonFrisY', usenumpyfunc=True)
+    Lx = 1e-3*(x[-1] - x[0])
+    Ly = 1e-3*(y[-1] - y[0])
+    dx = 1e-3*(x[1] - x[0])
+
+    projection = get_antarctic_stereographic_projection()
+
+    meshName = '{}x{}km_{}km_FRIS_stereo'.format(Lx, Ly, dx)
+    descriptor = ProjectionGridDescriptor.create(projection, x, y, meshName)
+
+    return descriptor  # }}}
+
 
 
 def _get_antarctic_stereographic_comparison_descriptor(config):  # {{{

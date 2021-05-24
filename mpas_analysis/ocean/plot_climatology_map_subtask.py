@@ -454,7 +454,8 @@ class PlotClimatologyMapSubtask(AnalysisTask):  # {{{
         if self.comparisonGridName == 'latlon':
             self._plot_latlon(remappedModelClimatology, remappedRefClimatology)
         elif self.comparisonGridName == 'antarctic' or \
-                self.comparisonGridName == 'arctic':
+                self.comparisonGridName == 'arctic' or \
+                self.comparisonGridName == 'fris':
             self._plot_polar(remappedModelClimatology,
                              remappedRefClimatology)
         # }}}
@@ -573,7 +574,8 @@ class PlotClimatologyMapSubtask(AnalysisTask):  # {{{
                 self.fieldNameInTitle, season, self.startYear,
                 self.endYear)
 
-        if self.comparisonGridName == 'antarctic':
+        if self.comparisonGridName == 'antarctic' or \
+                self.comparisonGridName == 'fris':
             hemisphere = 'south'
         else:
             # arctic
