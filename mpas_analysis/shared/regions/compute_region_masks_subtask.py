@@ -196,10 +196,10 @@ class ComputeRegionMasksSubtask(AnalysisTask):  # {{{
         self.useMpasMesh = self.obsFileName is None
         self.maskFileName = None
 
-        self.aggregationFunction, prefix, date = get_aggregator_by_name(
+        self.aggregationFunction, prefix, _ = get_aggregator_by_name(
             self.regionGroup)
-        self.date = date
-        self.outFileSuffix = '{}{}'.format(prefix, date)
+        self.date = '20211020'
+        self.outFileSuffix = '{}{}'.format(prefix, self.date)
         self.geojsonFileName = \
             get_region_mask(self.config,
                             '{}.geojson'.format(self.outFileSuffix))

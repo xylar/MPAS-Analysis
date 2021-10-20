@@ -1,0 +1,42 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+                "name": "Eastern Weddell",
+                "tags": "",
+                "object": "region",
+                "component": "ocean",
+                "author": "Xylar Asay-Davis"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -28.0,
+              -85.0
+            ],
+            [
+              -10.0,
+              -85.0
+            ],
+            [
+              -10.0,
+              -65.0
+            ],
+            [
+              -28.0,
+              -65.0
+            ],
+            [
+              -28.0,
+              -85.0
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
