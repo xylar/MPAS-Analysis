@@ -11,6 +11,6 @@ source ~/chrysalis/miniconda3/etc/profile.d/conda.sh
 conda activate mpas_dev
 export HDF5_USE_FILE_LOCKING=FALSE
 
-srun -N 1 -n 1 mpas_analysis revisions.cfg yrs171-200/CGM_vs_VGM.cfg --verbose
+srun -N 1 -n 1 mpas_analysis revisions.cfg yrs171-200/CGM_vs_VGM.cfg --verbose --purge
 
 
