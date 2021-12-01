@@ -22,6 +22,7 @@ from __future__ import absolute_import, division, print_function, \
 import xarray as xr
 import numpy
 from matplotlib.tri import Triangulation
+import matplotlib.pyplot as plt
 
 from geometric_features import FeatureCollection
 
@@ -628,6 +629,7 @@ class PlotTransectSubtask(AnalysisTask):  # {{{
                     ax.fill_between(d, ssh, numpy.zeros(ssh.shape), where=mask,
                                     interpolate=False, color='#e1eaf7',
                                     edgecolor='black', linewidth=1.)
+        self._plot_bedmap2()
 
         # make a red start axis and green end axis to correspond to the dots
         # in the inset
@@ -864,5 +866,15 @@ class PlotTransectSubtask(AnalysisTask):  # {{{
 
     # }}}
 
+    def _plot_bedmap2(self):
+        transect_name = self.transectName.replace(' ', '_')
+        path = '/home/ac.xylar/mpas-work/analysis/cryosphere_v1_revisions2_fris_transects'
+        file_name = f'{path}/{transect_name}_bedmap2_transect.nc'
+        ds = xr.open_dataset(file_name)
+        x = 1e-3*ds.dNode.values.ravel()
+        plt.plot(x, ds.bed.values.ravel(), color='black',
+                 linewidth=1, linestyle='--', zorder=10)
+        plt.plot(x, ds.draft.values.ravel(), color='black',
+                 linewidth=1, linestyle='--', zorder=10)
 
 # vim: foldmethod=marker ai ts=4 sts=4 et sw=4 ft=python
