@@ -8,12 +8,8 @@
 
 set -e
 
-source {{ conda_base }}/etc/profile.d/conda.sh
-conda activate {{ conda_env }}
-export HDF5_USE_FILE_LOCKING=FALSE
-export E3SMU_MACHINE={{ machine }}
+source /global/common/software/e3sm/anaconda_envs/test_e3sm_unified_1.6.0rc5_cori-haswell.sh
 
-echo env: {{ conda_env }}
 echo configs: {{ flags }} {{ config }}
 
 {{ parallel_exec }} mpas_analysis --list
