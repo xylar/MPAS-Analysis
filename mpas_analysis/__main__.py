@@ -456,6 +456,14 @@ def run_analysis(config, analyses):
                                            'logsSubdirectory')
 
     mainRunName = config.get('runs', 'mainRunName')
+    if mainRunName == '<<<placeholder>>>':
+        raise ValueError('You must supply the config option "mainRunName"')
+
+    for section in ['input', 'output']:
+        baseDirectory = config.get(section, 'baseDirectory')
+        if baseDirectory == '<<<placeholder>>>':
+            raise ValueError(f'You must supply the config option '
+                             f'"baseDirectory" in section [{section}]')
 
     if len(mainRunName) > 55:
         print('Warning: The main run name is quite long and will be '
