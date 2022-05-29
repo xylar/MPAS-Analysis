@@ -584,14 +584,14 @@ def update_time_bounds_from_file_names(config, section, componentName):
     # runDirectory
     historyDirectory = build_config_full_path(
         config, 'input',
-        '{}HistorySubdirectory'.format(componentName),
+        f'{componentName}HistorySubdirectory',
         defaultPath=runDirectory)
 
     errorOnMissing = config.getboolean('input', 'errorOnMissing')
 
     namelistFileName = build_config_full_path(
         config, 'input',
-        '{}NamelistFileName'.format(componentName))
+        f'{componentName}NamelistFileName')
     try:
         namelist = NameList(namelistFileName)
     except (OSError, IOError):
@@ -600,7 +600,7 @@ def update_time_bounds_from_file_names(config, section, componentName):
 
     streamsFileName = build_config_full_path(
         config, 'input',
-        '{}StreamsFileName'.format(componentName))
+        f'{componentName}StreamsFileName')
     try:
         historyStreams = StreamsFile(streamsFileName,
                                      streamsdir=historyDirectory)
@@ -618,11 +618,11 @@ def update_time_bounds_from_file_names(config, section, componentName):
         # get it again as an integer
         requestedEndYear = config.getint(section, 'endYear')
 
-    startDate = '{:04d}-01-01_00:00:00'.format(requestedStartYear)
+    startDate = f'{requestedStartYear:04d}-01-01_00:00:00'
     if requestedEndYear is None:
         endDate = None
     else:
-        endDate = '{:04d}-12-31_23:59:59'.format(requestedEndYear)
+        endDate = f'{requestedEndYear:04d}-12-31_23:59:59'
 
     streamName = 'timeSeriesStatsMonthlyOutput'
     try:
@@ -634,10 +634,9 @@ def update_time_bounds_from_file_names(config, section, componentName):
         return
 
     if len(inputFiles) == 0:
-        raise ValueError('No input files found for stream {} in {} between '
-                         '{} and {}'.format(streamName, componentName,
-                                            requestedStartYear,
-                                            requestedEndYear))
+        raise ValueError(f'No input files found for stream {streamName} in '
+                         f'{componentName} between {requestedStartYear} and '
+                         f'{requestedEndYear}')
 
     years, months = get_files_year_month(sorted(inputFiles),
                                          historyStreams,
@@ -645,13 +644,13 @@ def update_time_bounds_from_file_names(config, section, componentName):
 
     # search for the start of the first full year
     firstIndex = 0
-    while (firstIndex < len(years) and months[firstIndex] != 1):
+    while firstIndex < len(years) and months[firstIndex] != 1:
         firstIndex += 1
     startYear = years[firstIndex]
 
     # search for the end of the last full year
     lastIndex = len(years) - 1
-    while (lastIndex >= 0 and months[lastIndex] != 12):
+    while lastIndex >= 0 and months[lastIndex] != 12:
         lastIndex -= 1
     endYear = years[lastIndex]
 
@@ -662,24 +661,19 @@ def update_time_bounds_from_file_names(config, section, componentName):
     if startYear != requestedStartYear or endYear != requestedEndYear:
         if errorOnMissing:
             raise ValueError(
-                "{} start and/or end year different from requested\n"
-                "requested: {:04d}-{:04d}\n"
-                "actual:   {:04d}-{:04d}\n".format(
-                    section, requestedStartYear, requestedEndYear, startYear,
-                    endYear))
+                f"{section} start and/or end year different from requested\n"
+                f"requested: {requestedStartYear:04d}-{requestedEndYear:04d}\n"
+                f"actual:   {startYear:04d}-{endYear:04d}\n")
         else:
-            print("Warning: {} start and/or end year different from "
-                  "requested\n"
-                  "requested: {:04d}-{:04d}\n"
-                  "actual:   {:04d}-{:04d}\n".format(section,
-                                                     requestedStartYear,
-                                                     requestedEndYear,
-                                                     startYear,
-                                                     endYear))
+            print(
+                f"Warning: {section} start and/or end year different from "
+                f"requested\n"
+                f"requested: {requestedStartYear:04d}-{requestedEndYear:04d}\n"
+                f"actual:   {startYear:04d}-{endYear:04d}\n")
             config.set(section, 'startYear', str(startYear))
             config.set(section, 'endYear', str(endYear))
 
-    startDate = '{:04d}-01-01_00:00:00'.format(startYear)
+    startDate = f'{startYear:04d}-01-01_00:00:00'
     config.set(section, 'startDate', startDate)
-    endDate = '{:04d}-12-31_23:59:59'.format(endYear)
+    endDate = f'{startYear:04d}-12-31_23:59:59'
     config.set(section, 'endDate', endDate)
