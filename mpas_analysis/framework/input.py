@@ -10,7 +10,7 @@ from mpas_analysis.shared.io.utility import make_directories
 
 
 def get_namelist_restart_history_files(config, component_name, stream_names,
-                                       time_bounds_sections):
+                                       time_bounds_sections, skip_time_bounds):
     """
     Get namelist, restart and history files for the given streams.  If
     necessary, the time bounds in the config file will be updated to match the
@@ -35,6 +35,12 @@ def get_namelist_restart_history_files(config, component_name, stream_names,
         ['climatology', 'timeSeries', 'index'], depending on the component and
         the type of analysis to be run
 
+    skip_time_bounds : list
+        A list of streams for which the start and end year should not be used
+        to update the time bounds.  These streams may write their first output
+        a full month after the simulation begins but we nevertheless wish to
+        include that full first year of simulation in a climatology, time
+        series or climate index.
     Returns
     -------
     namelists : dict
@@ -109,11 +115,14 @@ def get_namelist_restart_history_files(config, component_name, stream_names,
             config, input_section)
 
         for stream_name in stream_names:
-            input_files = _get_history_files(
-                component_name, stream_name, start_year, end_year,
-                calendar, history_streams)
-
-            input_files = sorted(input_files)
+            try:
+                input_files = _get_history_files(
+                    component_name, stream_name, start_year, end_year,
+                    calendar, history_streams)
+            except ValueError:
+                # output for this stream doesn't seem to be available, perhaps
+                # because a corresponding analysis member is disabled
+                continue
 
             years, months, days = _get_files_year_month_day(
                 input_files, history_streams, stream_name)
@@ -142,6 +151,8 @@ def get_namelist_restart_history_files(config, component_name, stream_names,
         anomaly_ref_years[time_bounds_section] = anomaly_ref_year
 
     for stream_name in stream_names:
+        if stream_name in skip_time_bounds:
+            continue
         for time_bounds_section in time_bounds_sections:
             years = history_files[stream_name]['years']
             months = history_files[stream_name]['months']
@@ -278,7 +289,7 @@ def _get_start_and_end_year(config, section, raise_error=False):
     else:
         end_year = None
 
-    if raise_error and start_year is None or end_year is None:
+    if raise_error and (start_year is None or end_year is None):
         raise ValueError(f'Expected valid startYear and endYear in config '
                          f'section [{section}]')
 
@@ -324,15 +335,20 @@ def _get_history_files(component_name, stream_name, start_year, end_year,
     Get a list of available history files from the given stream
     """
 
-    start_date = f'{start_year:04d}-01-01_00:00:00'
+    if start_year is None:
+        start_date = None
+    else:
+        start_date = f'{start_year:04d}-01-01_00:00:00'
     if end_year is None:
         end_date = None
     else:
         end_date = f'{end_year:04d}-12-31_23:59:59'
 
     input_files = history_streams.readpath(
-        stream_name, start_date=start_date, end_date=end_date,
+        stream_name, startDate=start_date, endDate=end_date,
         calendar=calendar)
+
+    input_files = [os.path.abspath(input_file) for input_file in input_files]
 
     if len(input_files) == 0:
         raise ValueError(f'No input files found for stream {stream_name} in '
@@ -350,6 +366,10 @@ def _update_time_bounds_from_file_names(config, time_bounds_section, years,
     Update the start and end years and dates for time series, climatologies or
     climate indices based on the years actually available in the list of files.
     """
+
+    if len(years) == 0:
+        # no files so nothing to do here
+        return
 
     error_on_missing = config.getboolean('input', 'errorOnMissing')
 
@@ -371,6 +391,9 @@ def _update_time_bounds_from_file_names(config, time_bounds_section, years,
     if requested_end_year is None:
         config.set(time_bounds_section, 'endYear', str(end_year))
         requested_end_year = end_year
+
+    start_year = max(start_year, requested_start_year)
+    end_year = min(end_year, requested_end_year)
 
     if start_year != requested_start_year or end_year != requested_end_year:
         if error_on_missing:
@@ -413,6 +436,8 @@ def _create_symlinks(config, input_files, years, months, days, component_name,
 
     make_directories(symlink_directory)
 
+    symlink_filenames = []
+
     for in_file_name, year, month, day in \
             zip(input_files, years, months, days):
         out_file_name = f'{symlink_directory}/' \
@@ -422,5 +447,6 @@ def _create_symlinks(config, input_files, years, months, days, component_name,
             os.symlink(in_file_name, out_file_name)
         except OSError:
             pass
+        symlink_filenames.append(out_file_name)
 
-    return symlink_directory
+    return symlink_filenames
