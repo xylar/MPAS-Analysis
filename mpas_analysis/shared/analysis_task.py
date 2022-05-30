@@ -8,12 +8,6 @@
 # Additional copyright and license information can be found in the LICENSE file
 # distributed with this code, or at
 # https://raw.githubusercontent.com/MPAS-Dev/MPAS-Analysis/master/LICENSE
-"""
-Defines the base class for analysis tasks.
-"""
-# Authors
-# -------
-# Xylar Asay-Davis
 
 from multiprocessing import Process, Value
 import time
@@ -21,9 +15,7 @@ import traceback
 import logging
 import sys
 
-from mpas_analysis.shared.io import NameList, StreamsFile
-from mpas_analysis.shared.io.utility import build_config_full_path, \
-    make_directories, get_files_year_month
+from mpas_analysis.shared.io.utility import build_config_full_path
 
 
 class AnalysisTask(Process):
@@ -40,8 +32,7 @@ class AnalysisTask(Process):
         starting with lowercase (e.g. 'myTask' for class 'MyTask')
 
     componentName : {'ocean', 'seaIce'}
-        The name of the component (same as the folder where the task
-        resides)
+        The name of the component
 
     tags : list of str
         Tags used to describe the task (e.g. 'timeSeries', 'climatology',
@@ -49,35 +40,47 @@ class AnalysisTask(Process):
         which tasks are generated (e.g. 'all_transect' or 'no_climatology'
         in the 'generate' flags)
 
-    runDirectory : str
-        The base input directory for namelists, streams files and restart files
+    runAfterTasks : list
+        tasks that must be complete before this task can run
 
-    historyDirectory : str
-        The base input directory for history files
+    downstreamTasks : set
+        tuples of task and subtask names indicating what tasks depend on this
+        task, used to remove those tasks when this one fails during setup
+
+    subtasks : dict
+        Subtasks of this task, with subtask names as keys
+
+    streamNames : list
+        A list of MPAS stream names used by this task
 
     plotsDirectory : str
         The directory for writing plots (which is also created if it doesn't
         exist)
 
-    namelist : ``shared.io.NameList``
-        the namelist reader
+    namelists : dict
+        Namelist options for each valid input section in the config file
 
-    runStreams : ``shared.io.StreamsFile``
-        the streams file reader for streams in the run directory (e.g. restart
-        files)
+    restartFile : str
+        The name of a restart file that was found in the run directory,
+        often used for mesh information but also useful for determining the
+        simulation start time
 
-    historyStreams : ``shared.io.StreamsFile``
-        the streams file reader for streams in the history directory (most
-        streams other than restart files)
+    historyFiles : dict
+        A nested dictionary.  The outer keys are each of the ``stream_names``.
+        The inner keys are:
 
-    calendar : {'gregorian', 'gregoraian_noleap'}
+        - ``files`` - the input files for the stream
+
+        - ``years``, ``months``, ``days`` - a year, month and day taken from
+          each file name in ``files``.
+
+    anomalyRefYears : dict
+        For each type of analysis (climatology, time series, and climate
+        index) supported by the component, the anomaly reference year either
+        from a config option or the start data of the simulation
+
+    calendar : {'gregorian', 'gregorian_noleap'}
         The calendar used in the MPAS run
-
-    runAfterTasks : list of ``AnalysisTasks``
-        tasks that must be complete before this task can run
-
-    subtasks : ``OrderedDict`` of ``AnalysisTasks``
-        Subtasks of this task, with subtask names as keys
 
     xmlFileNames : list of strings
         The XML file associated with each plot produced by this analysis, empty
@@ -98,8 +101,8 @@ class AnalysisTask(Process):
     SUCCESS = 4
     FAIL = 5
 
-    def __init__(self, config, taskName, componentName, tags=[],
-                 subtaskName=None):
+    def __init__(self, config, taskName, componentName, tags=None,
+                 subtaskName=None, streamNames=None):
         """
         Construct the analysis task.
 
@@ -128,6 +131,9 @@ class AnalysisTask(Process):
 
         subtaskName : str, optional
             If this is a subtask of ``taskName``, the name of the subtask
+
+        streamNames : list
+            A list of MPAS stream names used by this task
         """
         # Authors
         # -------
@@ -147,15 +153,30 @@ class AnalysisTask(Process):
         self.taskName = taskName
         self.subtaskName = subtaskName
         self.componentName = componentName
-        self.tags = tags
+        if tags is None:
+            self.tags = []
+        else:
+            self.tags = tags
+        if streamNames is None:
+            self.streamNames = []
+        else:
+            self.streamNames = streamNames
         self.subtasks = []
         self.logger = None
         self.runAfterTasks = []
+        self.downstreamTasks = set()
         self.xmlFileNames = []
+
+        # initialized during setup and check
+        self.plotsDirectory = None
+        self.namelists = None
+        self.restartFile = None
+        self.historyFiles = None
+        self.anomalyRefYears = None
+        self.calendar = None
 
         # non-public attributes related to multiprocessing and logging
         self.daemon = True
-        self._setupStatus = None
         self._runStatus = Value('i', AnalysisTask.UNSET)
         self._stackTrace = None
         self._logFileName = None
@@ -171,65 +192,10 @@ class AnalysisTask(Process):
     def setup_and_check(self):
         """
         Perform steps to set up the analysis (e.g. reading namelists and
-        streams files).
-
-        After this call, the following attributes are set (see documentation
-        for the class):
-        runDirectory, historyDirectory, plotsDirectory, namelist, runStreams,
-        historyStreams, calendar
-
-        Individual tasks (children classes of this base class) should first
-        call this method to perform basic setup, then, check whether the
-        configuration is correct for a given analysis and perform additional,
-        analysis-specific setup.  For example, this function could check if
-        necessary observations and other data files are found, then, determine
-        the list of files to be read when the analysis is run.
+        streams files). Check to make sure the MPAS simulation was configured
+        to support this analysis.  Raise an exception if not.
         """
-        # Authors
-        # -------
-        # Xylar Asay-Davis
-
-        # read parameters from config file
-        # the run directory contains the restart files
-        self.runDirectory = build_config_full_path(self.config, 'input',
-                                                   'runSubdirectory')
-        # if the history directory exists, use it; if not, fall back on
-        # runDirectory
-        self.historyDirectory = build_config_full_path(
-            self.config, 'input',
-            '{}HistorySubdirectory'.format(self.componentName),
-            defaultPath=self.runDirectory)
-
-        self.plotsDirectory = build_config_full_path(self.config, 'output',
-                                                     'plotsSubdirectory')
-        namelistFileName = build_config_full_path(
-            self.config, 'input',
-            '{}NamelistFileName'.format(self.componentName))
-        self.namelist = NameList(namelistFileName)
-
-        streamsFileName = build_config_full_path(
-            self.config, 'input',
-            '{}StreamsFileName'.format(self.componentName))
-        self.runStreams = StreamsFile(streamsFileName,
-                                      streamsdir=self.runDirectory)
-        self.historyStreams = StreamsFile(streamsFileName,
-                                          streamsdir=self.historyDirectory)
-
-        self.calendar = self.namelist.get('config_calendar_type')
-
-        make_directories(self.plotsDirectory)
-
-        # set the start and end dates for each type of analysis
-        for tag in ['climatology', 'timeSeries', 'index']:
-            if tag in self.tags:
-                self.set_start_end_date(section=tag)
-
-        # redirect output to a log file
-        logsDirectory = build_config_full_path(self.config, 'output',
-                                               'logsSubdirectory')
-
-        self._logFileName = '{}/{}.log'.format(logsDirectory,
-                                               self.fullTaskName)
+        pass
 
     def run_task(self):
         """
@@ -252,7 +218,7 @@ class AnalysisTask(Process):
 
         Parameters
         ----------
-        task : ``AnalysisTask``
+        task : mpas_analysis.shared.AnalysisTask
             The task that should finish before this one begins
         """
         # Authors
@@ -261,6 +227,7 @@ class AnalysisTask(Process):
 
         if task not in self.runAfterTasks:
             self.runAfterTasks.append(task)
+            task.downstreamTasks.add((self.taskName, self.subtaskName))
 
     def add_subtask(self, subtask):
         """
@@ -280,6 +247,7 @@ class AnalysisTask(Process):
 
         if subtask not in self.subtasks:
             self.subtasks.append(subtask)
+            subtask.downstreamTasks.add((self.taskName, self.subtaskName))
 
     def run(self, writeLogFile=True):
         """
@@ -445,51 +413,59 @@ class AnalysisTask(Process):
         # -------
         # Xylar Asay-Davis
 
-        try:
-            optionName = analysisOptionName
-            enabled = self.namelist.getbool(optionName)
-        except ValueError:
-            enabled = default
-            if default:
-                print(f'Warning: namelist option {analysisOptionName} not '
-                      f'found.\n'
-                      f'This likely indicates that the simulation you '
-                      f'are analyzing was run with an\n'
-                      f'older version of MPAS-O that did not support '
-                      f'this flag.  Assuming enabled.')
+        if len(self.namelists) == 0:
+            raise IOError(f'No namelists were found for {self.printTaskName}')
 
-        if not enabled and raiseException:
-            raise RuntimeError('*** MPAS-Analysis relies on {} = .true.\n'
-                               '*** Make sure to enable this analysis '
-                               'member.'.format(analysisOptionName))
+        all_enabled = True
+        for namelist in self.namelists.values():
+            try:
+                optionName = analysisOptionName
+                enabled = namelist.getbool(optionName)
+            except ValueError:
+                enabled = default
+                if default:
+                    print(f'Warning: namelist option {analysisOptionName} not '
+                          f'found.\n'
+                          f'This likely indicates that the simulation you '
+                          f'are analyzing was run with an\n'
+                          f'older version of MPAS-O that did not support '
+                          f'this flag.  Assuming enabled.')
 
-        return enabled
+            if not enabled and raiseException:
+                raise RuntimeError('*** MPAS-Analysis relies on {} = .true.\n'
+                                   '*** Make sure to enable this analysis '
+                                   'member.'.format(analysisOptionName))
+            all_enabled = all_enabled and enabled
 
-    def set_start_end_date(self, section):
+        return all_enabled
+
+    def framework_setup(self, namelists, restartFile, historyFiles,
+                        anomalyRefYears):
         """
-        Set the start and end dates in the ``config`` correspond to the start
-        and end years in a given category of analysis
-
-        Parameters
-        ----------
-        section : str
-            The name of a section in the config file containing ``startYear``
-            and ``endYear`` options. ``section`` is typically one of
-            ``climatology``, ``timeSeries`` or ``index``
+        Used by the MPAS-Analysis framework to set attributes shared among all
+        tasks from a given component as well as creating the plot directory
+        and determining a log file for this task
         """
-        # Authors
-        # -------
-        # Xylar Asay-Davis
+        self.namelists = namelists
+        self.restartFile = restartFile
+        self.historyFiles = {}
+        # make available only the streams that this task uses, mostly as a
+        # sanity check that the task actually asked for the streams it will
+        # use.
+        for streamName in self.streamNames:
+            self.historyFiles[streamName] = historyFiles[streamName]
+        self.anomalyRefYears = anomalyRefYears
+        self.calendar = namelists['input'].get('config_calendar_type')
 
-        if not self.config.has_option(section, 'startDate'):
-            startDate = '{:04d}-01-01_00:00:00'.format(
-                self.config.getint(section, 'startYear'))
-            self.config.set(section, 'startDate', startDate)
-        if not self.config.has_option(section, 'endDate'):
-            endDate = '{:04d}-12-31_23:59:59'.format(
-                self.config.getint(section, 'endYear'))
-            self.config.set(section, 'endDate', endDate)
+        self.plotsDirectory = build_config_full_path(self.config, 'output',
+                                                     'plotsSubdirectory')
 
+        # redirect output to a log file
+        logsDirectory = build_config_full_path(self.config, 'output',
+                                               'logsSubdirectory')
+
+        self._logFileName = '{}/{}.log'.format(logsDirectory,
+                                               self.fullTaskName)
 
 # }}}
 
@@ -539,9 +515,6 @@ class AnalysisFormatter(logging.Formatter):
         return result
 
 
-# }}}
-
-
 class StreamToLogger(object):
     """
     Modified based on code by:
@@ -566,114 +539,3 @@ class StreamToLogger(object):
 
     def flush(self):
         pass
-
-
-def update_time_bounds_from_file_names(config, section, componentName):
-    """
-    Update the start and end years and dates for time series, climatologies or
-    climate indices based on the years actually available in the list of files.
-    """
-    # Authors
-    # -------
-    # Xylar Asay-Davis
-
-    # read parameters from config file
-    # the run directory contains the restart files
-    runDirectory = build_config_full_path(config, 'input', 'runSubdirectory')
-    # if the history directory exists, use it; if not, fall back on
-    # runDirectory
-    historyDirectory = build_config_full_path(
-        config, 'input',
-        f'{componentName}HistorySubdirectory',
-        defaultPath=runDirectory)
-
-    errorOnMissing = config.getboolean('input', 'errorOnMissing')
-
-    namelistFileName = build_config_full_path(
-        config, 'input',
-        f'{componentName}NamelistFileName')
-    try:
-        namelist = NameList(namelistFileName)
-    except (OSError, IOError):
-        # this component likely doesn't have output in this run
-        return
-
-    streamsFileName = build_config_full_path(
-        config, 'input',
-        f'{componentName}StreamsFileName')
-    try:
-        historyStreams = StreamsFile(streamsFileName,
-                                     streamsdir=historyDirectory)
-    except (OSError, IOError):
-        # this component likely doesn't have output in this run
-        return
-
-    calendar = namelist.get('config_calendar_type')
-
-    requestedStartYear = config.getint(section, 'startYear')
-    requestedEndYear = config.get(section, 'endYear')
-    if requestedEndYear == 'end':
-        requestedEndYear = None
-    else:
-        # get it again as an integer
-        requestedEndYear = config.getint(section, 'endYear')
-
-    startDate = f'{requestedStartYear:04d}-01-01_00:00:00'
-    if requestedEndYear is None:
-        endDate = None
-    else:
-        endDate = f'{requestedEndYear:04d}-12-31_23:59:59'
-
-    streamName = 'timeSeriesStatsMonthlyOutput'
-    try:
-        inputFiles = historyStreams.readpath(
-            streamName, startDate=startDate, endDate=endDate,
-            calendar=calendar)
-    except ValueError:
-        # this component likely doesn't have output in this run
-        return
-
-    if len(inputFiles) == 0:
-        raise ValueError(f'No input files found for stream {streamName} in '
-                         f'{componentName} between {requestedStartYear} and '
-                         f'{requestedEndYear}')
-
-    years, months = get_files_year_month(sorted(inputFiles),
-                                         historyStreams,
-                                         streamName)
-
-    # search for the start of the first full year
-    firstIndex = 0
-    while firstIndex < len(years) and months[firstIndex] != 1:
-        firstIndex += 1
-    startYear = years[firstIndex]
-
-    # search for the end of the last full year
-    lastIndex = len(years) - 1
-    while lastIndex >= 0 and months[lastIndex] != 12:
-        lastIndex -= 1
-    endYear = years[lastIndex]
-
-    if requestedEndYear is None:
-        config.set(section, 'endYear', str(endYear))
-        requestedEndYear = endYear
-
-    if startYear != requestedStartYear or endYear != requestedEndYear:
-        if errorOnMissing:
-            raise ValueError(
-                f"{section} start and/or end year different from requested\n"
-                f"requested: {requestedStartYear:04d}-{requestedEndYear:04d}\n"
-                f"actual:   {startYear:04d}-{endYear:04d}\n")
-        else:
-            print(
-                f"Warning: {section} start and/or end year different from "
-                f"requested\n"
-                f"requested: {requestedStartYear:04d}-{requestedEndYear:04d}\n"
-                f"actual:   {startYear:04d}-{endYear:04d}\n")
-            config.set(section, 'startYear', str(startYear))
-            config.set(section, 'endYear', str(endYear))
-
-    startDate = f'{startYear:04d}-01-01_00:00:00'
-    config.set(section, 'startDate', startDate)
-    endDate = f'{startYear:04d}-12-31_23:59:59'
-    config.set(section, 'endDate', endDate)
