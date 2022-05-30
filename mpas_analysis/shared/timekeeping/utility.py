@@ -8,64 +8,13 @@
 # Additional copyright and license information can be found in the LICENSE file
 # distributed with this code, or at
 # https://raw.githubusercontent.com/MPAS-Dev/MPAS-Analysis/master/LICENSE
-"""
-Time keeping utility functions
-"""
-# Authors
-# -------
-# Xylar Asay-Davis
 
 import datetime
 import netCDF4
-import xarray
 import numpy
 
 from mpas_analysis.shared.timekeeping.MpasRelativeDelta import \
     MpasRelativeDelta
-from mpas_analysis.shared.io.utility import decode_strings
-
-
-def get_simulation_start_time(streams):
-    """
-    Given a ``StreamsFile`` object, returns the simulation start time parsed
-    from a restart file.
-
-    Parameters
-    ----------
-    steams : ``StreamsFile`` object
-        For parsing an MPAS streams file
-
-    Returns
-    -------
-    simulation_start_time : str
-        The start date of the simulation parsed from a restart file identified
-        by the contents of ``streams``.
-
-    Raises
-    ------
-    IOError
-        If no restart file can be found.
-    """
-    # Authors
-    # -------
-    # Xylar Asay-Davis
-
-    try:
-        restartFile = streams.readpath('restart')[0]
-    except ValueError:
-        raise IOError('No MPAS restart file found: need at least one '
-                      'restart file for analysis to work correctly')
-
-    ds = xarray.open_dataset(restartFile)
-    da = ds.simulationStartTime
-    if da.dtype.type is numpy.string_:
-        simulationStartTime = bytes.decode(da.values.tobytes())
-    else:
-        simulationStartTime = da.values.tobytes()
-    # replace underscores so it works as a CF-compliant reference date
-    simulationStartTime = simulationStartTime.rstrip('\x00').replace('_', ' ')
-
-    return simulationStartTime
 
 
 def string_to_datetime(dateString):
@@ -170,7 +119,7 @@ def string_to_days_since_date(dateString, calendar='gregorian',
 
     Parameters
     ----------
-    dateStrings : str or array-like of str
+    dateString : str or array-like of str
         A date and time (or array of date/times) in one of the following
         formats::
 
@@ -289,7 +238,7 @@ def datetime_to_days(dates, calendar='gregorian', referenceDate='0001-01-01'):
 
     Parameters
     ----------
-    datetime : instance or array-like of datetime.datetime
+    dates : {list, datetime.datetime}
         The date(s) to be converted to days since ``referenceDate`` on the
         given ``calendar``.
 

@@ -143,7 +143,7 @@ class ComputeAnomalySubtask(AnalysisTask):
         months = delta.months + 12*delta.years
 
         if months <= self.movingAveragePoints:
-            raise ValueError('Cannot meaninfully perform a rolling mean '
+            raise ValueError('Cannot meaningfully perform a rolling mean '
                              'because the time series is too short.')
 
         self.mpasTimeSeriesTask.add_variables(variableList=self.variableList)

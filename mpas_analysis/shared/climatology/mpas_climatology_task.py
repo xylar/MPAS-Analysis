@@ -53,7 +53,7 @@ class MpasClimatologyTask(AnalysisTask):
     inputFiles : list of str
         A list of input files used to compute the climatologies.
 
-    ncclimoModel : {'mpaso', 'mpascice'}
+    ncclimoModel : {'mpaso', 'mpassi'}
         The name of the component expected by ``ncclimo``
 
     startDate, endDate : str
@@ -121,7 +121,7 @@ class MpasClimatologyTask(AnalysisTask):
         if componentName == 'ocean':
             self.ncclimoModel = 'mpaso'
         elif componentName == 'seaIce':
-            self.ncclimoModel = 'mpascice'
+            self.ncclimoModel = 'mpassi'
         else:
             raise ValueError('component {} is not supported by ncclimo.\n'
                              'Check with Charlie Zender and Xylar Asay-Davis\n'

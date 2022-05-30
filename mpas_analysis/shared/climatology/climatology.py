@@ -439,7 +439,7 @@ def get_unmasked_mpas_climatology_file_name(config, season, componentName,
     if componentName == 'ocean':
         ncclimoModel = 'mpaso'
     elif componentName == 'seaIce':
-        ncclimoModel = 'mpascice'
+        ncclimoModel = 'mpassi'
     else:
         raise ValueError('component {} is not supported by ncclimo.\n'
                          'Check with Charlie Zender and Xylar Asay-Davis\n'
@@ -496,7 +496,7 @@ def get_masked_mpas_climatology_file_name(config, season, componentName,
     if componentName == 'ocean':
         ncclimoModel = 'mpaso'
     elif componentName == 'seaIce':
-        ncclimoModel = 'mpascice'
+        ncclimoModel = 'mpassi'
     else:
         raise ValueError('component {} is not supported by ncclimo.\n'
                          'Check with Charlie Zender and Xylar Asay-Davis\n'
@@ -568,7 +568,7 @@ def get_remapped_mpas_climatology_file_name(config, season, componentName,
     if componentName == 'ocean':
         ncclimoModel = 'mpaso'
     elif componentName == 'seaIce':
-        ncclimoModel = 'mpascice'
+        ncclimoModel = 'mpassi'
     else:
         raise ValueError('component {} is not supported by ncclimo.\n'
                          'Check with Charlie Zender and Xylar Asay-Davis\n'
