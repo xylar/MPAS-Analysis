@@ -17,8 +17,7 @@ from mpas_analysis.shared import AnalysisTask
 
 from mpas_analysis.shared.io import write_netcdf
 
-from mpas_analysis.shared.timekeeping.utility import \
-    get_simulation_start_time, string_to_datetime
+from mpas_analysis.shared.timekeeping.utility import string_to_datetime
 
 from mpas_analysis.shared.timekeeping.MpasRelativeDelta import \
     MpasRelativeDelta
@@ -164,16 +163,9 @@ class ComputeAnomalySubtask(AnalysisTask):
         startDate = config.get('timeSeries', 'startDate')
         endDate = config.get('timeSeries', 'endDate')
 
-        anomalyYear = self.anomalyRefYears
-
-        if config.has_option('timeSeries', 'anomalyRefYear'):
-            anomalyYear = config.getint('timeSeries', 'anomalyRefYear')
-            anomalyRefDate = '{:04d}-01-01_00:00:00'.format(anomalyYear)
-            anomalyEndDate = '{:04d}-12-31_23:59:59'.format(anomalyYear)
-        else:
-            anomalyRefDate = get_simulation_start_time(self.runStreams)
-            anomalyYear = int(anomalyRefDate[0:4])
-            anomalyEndDate = '{:04d}-12-31_23:59:59'.format(anomalyYear)
+        anomalyYear = self.anomalyRefYears['timeSeries']
+        anomalyRefDate = '{:04d}-01-01_00:00:00'.format(anomalyYear)
+        anomalyEndDate = '{:04d}-12-31_23:59:59'.format(anomalyYear)
 
         ds = compute_moving_avg_anomaly_from_start(
             timeSeriesFileName=self.inputFile,

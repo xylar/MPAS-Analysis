@@ -14,7 +14,6 @@ from io import StringIO
 from mpas_tools.config import MpasConfigParser
 
 from mpas_analysis.shared.climatology import MpasClimatologyTask
-from mpas_analysis.shared.timekeeping.utility import get_simulation_start_time
 
 
 class RefYearMpasClimatologyTask(MpasClimatologyTask):
@@ -87,13 +86,7 @@ class RefYearMpasClimatologyTask(MpasClimatologyTask):
         # Xylar Asay-Davis
 
         config = self.config
-        if config.has_option('climatology', 'anomalyRefYear'):
-            anomalyRefYear = config.getint('climatology', 'anomalyRefYear')
-        else:
-            # we want the start year of the simulation, which we can't get yet
-            anomalyRefDate = get_simulation_start_time(self.runStreams)
-            anomalyRefYear = int(anomalyRefDate[0:4])
-
+        anomalyRefYear = self.anomalyRefYears['climatology']
         startYear = anomalyRefYear
         endYear = anomalyRefYear
 

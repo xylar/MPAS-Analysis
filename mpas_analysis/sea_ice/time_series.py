@@ -20,7 +20,7 @@ from mpas_analysis.shared.io.utility import build_config_full_path, \
     check_path_exists, make_directories, build_obs_path
 
 from mpas_analysis.shared.timekeeping.utility import date_to_days, \
-    days_to_datetime, datetime_to_days, get_simulation_start_time
+    days_to_datetime, datetime_to_days
 from mpas_analysis.shared.timekeeping.MpasRelativeDelta import \
     MpasRelativeDelta
 
@@ -130,8 +130,6 @@ class TimeSeriesSeaIce(AnalysisTask):
             raise IOError('No files were found in stream {} between {} and '
                           '{}.'.format(streamName, self.startDate,
                                        self.endDate))
-
-        self.simulationStartTime = get_simulation_start_time(self.runStreams)
 
         try:
             self.restartFileName = self.runStreams.readpath('restart')[0]

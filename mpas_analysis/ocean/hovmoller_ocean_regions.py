@@ -19,8 +19,7 @@ from mpas_analysis.ocean.plot_hovmoller_subtask import PlotHovmollerSubtask
 
 from mpas_analysis.shared.io import write_netcdf
 
-from mpas_analysis.shared.timekeeping.utility import \
-    get_simulation_start_time, string_to_datetime
+from mpas_analysis.shared.timekeeping.utility import string_to_datetime
 
 from mpas_analysis.shared.timekeeping.MpasRelativeDelta import \
     MpasRelativeDelta
