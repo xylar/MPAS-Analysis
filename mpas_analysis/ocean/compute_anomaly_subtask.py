@@ -164,6 +164,8 @@ class ComputeAnomalySubtask(AnalysisTask):
         startDate = config.get('timeSeries', 'startDate')
         endDate = config.get('timeSeries', 'endDate')
 
+        anomalyYear = self.anomalyRefYears
+
         if config.has_option('timeSeries', 'anomalyRefYear'):
             anomalyYear = config.getint('timeSeries', 'anomalyRefYear')
             anomalyRefDate = '{:04d}-01-01_00:00:00'.format(anomalyYear)

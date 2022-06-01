@@ -311,6 +311,9 @@ class ComputeObsTSClimatology(AnalysisTask):
         if os.path.exists(self.fileName):
             return
 
+        climatologyDirectory = os.path.dirname(self.fileName)
+        make_directories(climatologyDirectory)
+
         config = self.config
         obsDict = self.obsDict
         season = self.season
@@ -441,8 +444,6 @@ class ComputeObsTSClimatology(AnalysisTask):
             config=self.config, section='output',
             relativePathOption='climatologySubdirectory',
             relativePathSection=obsSection)
-
-        make_directories(climatologyDirectory)
 
         fileName = '{}/{}_{}_{}{}.nc'.format(
             climatologyDirectory, 'TS_{}'.format(obsDict['suffix']),

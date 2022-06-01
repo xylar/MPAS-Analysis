@@ -96,6 +96,9 @@ def make_directories(path):
     # -------
     # Xylar Asay-Davis
 
+    if '<<<placeholder>>>' in path:
+        raise ValueError(f'Trying to create an invalid directory: {path}]')
+
     try:
         os.makedirs(path)
     except OSError:
@@ -209,8 +212,6 @@ def get_region_mask(config, regionMaskFile):
             # still not found, point to a local mask directory
             maskSubdirectory = build_config_full_path(config, 'output',
                                                       'maskSubdirectory')
-            make_directories(maskSubdirectory)
-
             fullFileName = '{}/{}'.format(maskSubdirectory,
                                           regionMaskFile)
 
