@@ -300,41 +300,6 @@ def check_path_exists(path):
         raise OSError('Path {} not found'.format(path))
 
 
-def get_files_year_month(fileNames, streamsFile, streamName):
-    """
-    Extract the year and month from file names associated with a stream
-
-    Parameters
-    ----------
-    fileNames : list of str
-        The names of files with a year and month in their names.
-
-    streamsFile : ``StreamsFile``
-        The parsed streams file, used to get a template for the
-
-    streamName : str
-        The name of the stream with a file-name template for ``fileNames``
-
-    Returns
-    -------
-    years, months : list of int
-        The years and months for each file in ``fileNames``
-    """
-    # Authors
-    # -------
-    # Xylar Asay-Davis
-
-    template = streamsFile.read_datetime_template(streamName)
-    template = os.path.basename(template)
-    dts = [datetime.strptime(os.path.basename(fileName), template) for
-           fileName in fileNames]
-
-    years = [dt.year for dt in dts]
-    months = [dt.month for dt in dts]
-
-    return years, months
-
-
 def decode_strings(da):
     """
     Decode to unicode strings an array that might either be char or string type
