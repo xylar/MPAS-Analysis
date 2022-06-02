@@ -25,11 +25,10 @@ from mpas_analysis.test import TestCase, loaddatadir
 from mpas_analysis.shared.climatology import MpasClimatologyTask, \
     RemapMpasClimatologySubtask
 from mpas_analysis.shared import AnalysisTask
-from mpas_analysis.shared.analysis_task import \
-    update_time_bounds_from_file_names
 from mpas_analysis.shared.io.utility import build_config_full_path, \
     make_directories
 from mpas_analysis.shared.constants import constants
+from mpas_analysis.framework.setup import setup_analysis
 
 
 @pytest.mark.usefixtures("loaddatadir")
@@ -42,45 +41,41 @@ class TestMpasClimatologyTask(TestCase):
         # Remove the directory after the test
         shutil.rmtree(self.test_dir)
 
-    def setup_config(self):
+    def setup_config(self, startYear, endYear):
         configPath = self.datadir.join('QU240.cfg')
         config = MpasConfigParser()
         config.add_from_file(str(configPath))
         config.set('input', 'baseDirectory', str(self.datadir))
         config.set('output', 'baseDirectory', str(self.test_dir))
+        if startYear is not None:
+            config.set('climatology', 'startYear', str(startYear))
+            startDate = '{:04d}-01-01_00:00:00'.format(startYear)
+            config.set('climatology', 'startDate', startDate)
+        if endYear is not None:
+            config.set('climatology', 'endYear', str(endYear))
+            endDate = '{:04d}-12-31_23:59:59'.format(endYear)
+            config.set('climatology', 'endDate', endDate)
         return config
 
-    def setup_task(self):
-        config = self.setup_config()
+    def setup_task(self, startYear=None, endYear=None):
+        config = self.setup_config(startYear, endYear)
         mpasClimatologyTask = MpasClimatologyTask(config=config,
                                                   componentName='ocean')
 
-        mpasClimatologyTask.setup_and_check()
-        return mpasClimatologyTask
+        dummpyTask = DummyRemapAnalysisTask(
+            mpasClimatologyTask=mpasClimatologyTask)
 
-    def setup_subtask(self, mpasClimatologyTask):
-        parentTask = AnalysisTask(
-            config=mpasClimatologyTask.config, taskName='fake',
-            componentName=mpasClimatologyTask.componentName,
-            tags=['climatology'])
-        climatologyName = 'ssh'
-        variableList = ['timeMonthly_avg_ssh']
-        seasons = list(mpasClimatologyTask.variableList.keys())
+        remapSubtask = dummpyTask.remapSubtask
 
-        remapSubtask = RemapMpasClimatologySubtask(
-            mpasClimatologyTask, parentTask, climatologyName,
-            variableList, seasons, comparisonGridNames=['latlon'])
+        analyses = {
+            (mpasClimatologyTask.taskName, mpasClimatologyTask.subtaskName):
+                mpasClimatologyTask,
+            (dummpyTask.taskName, dummpyTask.subtaskName): dummpyTask,
+            (remapSubtask.taskName, remapSubtask.subtaskName): remapSubtask}
 
-        remapSubtask.setup_and_check()
-        return remapSubtask
+        setup_analysis(analyses, config, components=['ocean'], verbose=True)
 
-    def add_variables(self, mpasClimatologyTask):
-        variableList = ['timeMonthly_avg_ssh', 'timeMonthly_avg_tThreshMLD']
-        seasons = ['JFM', 'JJA', 'ANN']
-        mpasClimatologyTask.add_variables(variableList=variableList,
-                                          seasons=seasons)
-
-        return variableList, seasons
+        return mpasClimatologyTask, dummpyTask
 
     def verify_variables_for_season(self, mpasClimatologyTask, variableList,
                                     season):
@@ -95,8 +90,9 @@ class TestMpasClimatologyTask(TestCase):
                    mpasClimatologyTask.variableList[monthName])
 
     def test_add_variables(self):
-        mpasClimatologyTask = self.setup_task()
-        variableList, seasons = self.add_variables(mpasClimatologyTask)
+        mpasClimatologyTask, dummpyTask = self.setup_task()
+        seasons = dummpyTask.seasons
+        variableList = dummpyTask.allVariableList
 
         for season in seasons:
             self.verify_variables_for_season(mpasClimatologyTask, variableList,
@@ -111,16 +107,14 @@ class TestMpasClimatologyTask(TestCase):
                                              season)
 
     def test_get_file_name(self):
-        mpasClimatologyTask = self.setup_task()
-        variableList, seasons = self.add_variables(mpasClimatologyTask)
+        mpasClimatologyTask, _ = self.setup_task()
 
         fileName = mpasClimatologyTask.get_file_name(season='JFM')
         assert(fileName == '{}/clim/mpas/avg/unmasked_oQU240/'
                'mpaso_JFM_000201_000203_climo.nc'.format(str(self.test_dir)))
 
     def test_run_analysis(self):
-        mpasClimatologyTask = self.setup_task()
-        self.add_variables(mpasClimatologyTask)
+        mpasClimatologyTask, _ = self.setup_task()
 
         config = mpasClimatologyTask.config
         logsDirectory = build_config_full_path(config, 'output',
@@ -135,8 +129,7 @@ class TestMpasClimatologyTask(TestCase):
             assert(os.path.exists(fileName))
 
     def test_update_climatology_bounds_and_create_symlinks(self):
-        mpasClimatologyTask = self.setup_task()
-        config = mpasClimatologyTask.config
+        mpasClimatologyTask, _ = self.setup_task()
 
         # first make sure the start and end years stay unchanged when we use
         # the start and end years already in the config file
@@ -145,7 +138,6 @@ class TestMpasClimatologyTask(TestCase):
         startDate = '{:04d}-01-01_00:00:00'.format(startYear)
         endDate = '{:04d}-12-31_23:59:59'.format(endYear)
 
-        update_time_bounds_from_file_names(config, 'climatology', 'ocean')
         mpasClimatologyTask._create_symlinks()
 
         assert(mpasClimatologyTask.startYear == startYear)
@@ -153,19 +145,13 @@ class TestMpasClimatologyTask(TestCase):
         assert(mpasClimatologyTask.startDate == startDate)
         assert(mpasClimatologyTask.endDate == endDate)
 
-        # Now, set the the start and end years out of range and make sure they
+        # Now, set the start and end years out of range and make sure they
         # get changed back to the values that are in range
         startYear = 1
         endYear = 5
-        startDate = '{:04d}-01-01_00:00:00'.format(startYear)
-        endDate = '{:04d}-12-31_23:59:59'.format(endYear)
 
-        config.set('climatology', 'startYear', str(startYear))
-        config.set('climatology', 'endYear', str(endYear))
-        config.set('climatology', 'startDate', startDate)
-        config.set('climatology', 'endDate', endDate)
+        mpasClimatologyTask, _ = self.setup_task(startYear, endYear)
 
-        update_time_bounds_from_file_names(config, 'climatology', 'ocean')
         mpasClimatologyTask._create_symlinks()
 
         startYear = 2
@@ -179,9 +165,8 @@ class TestMpasClimatologyTask(TestCase):
         assert(mpasClimatologyTask.endDate == endDate)
 
     def test_subtask_run_analysis(self):
-        mpasClimatologyTask = self.setup_task()
-        self.add_variables(mpasClimatologyTask)
-        remapSubtask = self.setup_subtask(mpasClimatologyTask)
+        mpasClimatologyTask, dummpyTask = self.setup_task()
+        remapSubtask = dummpyTask.remapSubtask
 
         config = mpasClimatologyTask.config
         logsDirectory = build_config_full_path(config, 'output',
@@ -201,9 +186,8 @@ class TestMpasClimatologyTask(TestCase):
             assert(os.path.exists(fileName))
 
     def test_subtask_get_file_name(self):
-        mpasClimatologyTask = self.setup_task()
-        variableList, seasons = self.add_variables(mpasClimatologyTask)
-        remapSubtask = self.setup_subtask(mpasClimatologyTask)
+        mpasClimatologyTask, dummpyTask = self.setup_task()
+        remapSubtask = dummpyTask.remapSubtask
 
         fileName = remapSubtask.get_masked_file_name(season='JFM')
         assert(fileName == '{}/clim/mpas/avg/masked/ssh_oQU240/'
@@ -214,3 +198,27 @@ class TestMpasClimatologyTask(TestCase):
         assert(fileName == '{}/clim/mpas/avg/remapped/'
                'ssh_oQU240_to_0.5x0.5degree/mpaso_JFM_000201_000203_climo.nc'
                ''.format(str(self.test_dir)))
+
+
+class DummyRemapAnalysisTask(AnalysisTask):
+    def __init__(self, mpasClimatologyTask):
+        super().__init__(
+            config=mpasClimatologyTask.config, taskName='fake',
+            componentName=mpasClimatologyTask.componentName,
+            tags=['climatology'])
+        self.mpasClimatologyTask = mpasClimatologyTask
+        self.allVariableList = ['timeMonthly_avg_ssh',
+                                'timeMonthly_avg_tThreshMLD']
+        self.seasons = ['JFM', 'JJA', 'ANN']
+
+        climatologyName = 'ssh'
+        self.remapVariableList = ['timeMonthly_avg_ssh']
+        self.remapSubtask = RemapMpasClimatologySubtask(
+            mpasClimatologyTask, self, climatologyName,
+            self.remapVariableList, self.seasons,
+            comparisonGridNames=['latlon'])
+
+    def setup_and_check(self):
+        self.mpasClimatologyTask.add_variables(variableList=self.allVariableList,
+                                               seasons=self.seasons)
+
