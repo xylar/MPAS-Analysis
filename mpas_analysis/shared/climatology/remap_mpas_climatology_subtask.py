@@ -60,10 +60,6 @@ class RemapMpasClimatologySubtask(AnalysisTask):
         Descriptors of the comparison grids to use for remapping, with
         grid names as the keys.
 
-    restartFileName : str
-        If ``comparisonGridName`` is not ``None``, the name of a restart
-        file from which the MPAS mesh can be read.
-
     useNcremap : bool, optional
         Whether to use ncremap to do the remapping (the other option being
         an internal python code that handles more grid types and extra
@@ -188,20 +184,6 @@ class RemapMpasClimatologySubtask(AnalysisTask):
         # Authors
         # -------
         # Xylar Asay-Davis
-
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(RemapMpasClimatologySubtask, self).setup_and_check()
-
-        try:
-            self.restartFileName = self.runStreams.readpath('restart')[0]
-        except ValueError:
-            raise IOError('No MPAS restart file found: need at least one '
-                          'restart file to perform remapping of '
-                          'climatologies.')
 
         # we set up the remapper here because ESFM_RegridWeightGen seems to
         # have trouble if it runs in another process (or in several at once)
@@ -406,8 +388,7 @@ class RemapMpasClimatologySubtask(AnalysisTask):
                 self.comparisonDescriptors[comparisonGridName]
             self.comparisonGridName = comparisonDescriptor.meshName
             mpasDescriptor = MpasMeshDescriptor(
-                self.restartFileName, meshName=config.get('input',
-                                                          'mpasMeshName'))
+                self.restartFile, meshName=config.get('input', 'mpasMeshName'))
             self.mpasMeshName = mpasDescriptor.meshName
 
             self.remappers[comparisonGridName] = get_remapper(
@@ -499,10 +480,6 @@ class RemapMpasClimatologySubtask(AnalysisTask):
         dsMask : ``xarray.Dataset`` object
             A data set (from the first input file) that can be used to
             determine the mask in MPAS output files.
-
-        Author
-        ------
-        Xylar Asay-Davis
         """
 
         climatologyFileName = self.mpasClimatologyTask.get_file_name(season)
@@ -558,7 +535,7 @@ class RemapMpasClimatologySubtask(AnalysisTask):
             A remapper that can be used to remap files or data sets to a
             comparison grid.
 
-        comparisonGridNames : str
+        comparisonGridName : str
             The name of the comparison grid to use for remapping.
 
         season : str

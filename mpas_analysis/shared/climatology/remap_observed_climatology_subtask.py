@@ -110,13 +110,6 @@ class RemapObservedClimatologySubtask(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        # call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(RemapObservedClimatologySubtask, self).setup_and_check()
-
         # we set up the remappers here because ESFM_RegridWeightGen seems to
         # have trouble if it runs in another process (or in several at once)
         self._setup_remappers(self.fileName)

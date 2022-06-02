@@ -25,8 +25,7 @@ from mpas_analysis.shared.climatology.climatology import \
     get_unmasked_mpas_climatology_file_name, \
     get_climatology_op_directory
 
-from mpas_analysis.shared.io.utility import make_directories, \
-    get_files_year_month
+from mpas_analysis.shared.io.utility import make_directories
 
 from mpas_analysis.shared.io import write_netcdf
 
@@ -136,11 +135,12 @@ class MpasClimatologyTask(AnalysisTask):
         self.useNcclimo = config.getboolean('climatology', 'useNcclimo')
 
         # call the constructor from the base class (AnalysisTask)
-        super(MpasClimatologyTask, self).__init__(
+        super().__init__(
             config=config,
             taskName=taskName,
             componentName=componentName,
-            tags=tags)
+            tags=tags,
+            streamNames=[self.streamName])
 
         ncclimoParallelMode = config.get('execute', 'ncclimoParallelMode')
         if self.useNcclimo:
@@ -249,13 +249,6 @@ class MpasClimatologyTask(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(MpasClimatologyTask, self).setup_and_check()
-
         if self.op == 'avg':
             self.check_analysis_enabled(
                 analysisOptionName='config_am_timeseriesstatsmonthly_enable',
@@ -274,11 +267,9 @@ class MpasClimatologyTask(AnalysisTask):
         self.startDate = '{:04d}-01-01_00:00:00'.format(self.startYear)
         self.endDate = '{:04d}-12-31_23:59:59'.format(self.endYear)
 
-        # get a list of timeSeriesSta output files from the streams file,
+        # get a list of timeSeriesStats output files from the streams file,
         # reading only those that are between the start and end dates
-        self.inputFiles = self.historyStreams.readpath(
-            self.streamName, startDate=self.startDate, endDate=self.endDate,
-            calendar=self.calendar)
+        self.inputFiles = self.historyFiles[self.streamName]['files']
 
         if len(self.inputFiles) == 0:
             raise IOError('No files were found in stream {} between {} and '
@@ -287,6 +278,7 @@ class MpasClimatologyTask(AnalysisTask):
 
         self.symlinkDirectory = self._create_symlinks()
 
+        print(self.inputFiles[0])
         with xarray.open_dataset(self.inputFiles[0]) as ds:
             self.allVariables = list(ds.data_vars.keys())
 
@@ -317,12 +309,13 @@ class MpasClimatologyTask(AnalysisTask):
             if season not in seasonsToCheck:
                 seasonsToCheck.append(season)
 
+        climatologyDirectory = get_unmasked_mpas_climatology_directory(
+            self.config, self.op)
+
         allExist = True
         for season in seasonsToCheck:
 
             climatologyFileName = self.get_file_name(season)
-            climatologyDirectory = get_unmasked_mpas_climatology_directory(
-                self.config, self.op)
 
             if not os.path.exists(climatologyFileName):
                 allExist = False
@@ -407,9 +400,9 @@ class MpasClimatologyTask(AnalysisTask):
         config = self.config
 
         fileNames = sorted(self.inputFiles)
-        years, months = get_files_year_month(fileNames,
-                                             self.historyStreams,
-                                             self.streamName)
+        historyDict = self.historyFiles[self.streamName]
+        years = historyDict['years']
+        months = historyDict['months']
 
         climatologyOpDirectory = get_climatology_op_directory(config, self.op)
 
@@ -680,10 +673,9 @@ class MpasClimatologySeasonSubtask(AnalysisTask):
             # this is an individual month, so create a climatology from
             # timeSeriesStatsMonthlyOutput
 
-            fileNames = sorted(parentTask.inputFiles)
-            years, months = get_files_year_month(
-                fileNames, self.historyStreams,
-                parentTask.streamName)
+            historyDict = parentTask.historyFiles[parentTask.streamName]
+            years = historyDict['years']
+            months = historyDict['months']
 
             with xarray.open_mfdataset(parentTask.inputFiles,
                                        combine='nested',
