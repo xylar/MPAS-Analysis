@@ -20,7 +20,7 @@ from geometric_features import FeatureCollection, read_feature_collection
 
 from mpas_analysis.shared import AnalysisTask
 from mpas_analysis.shared.io.utility import build_config_full_path, \
-    get_files_year_month, make_directories, decode_strings
+    make_directories, decode_strings
 from mpas_analysis.shared.io import open_mpas_dataset, write_netcdf
 from mpas_analysis.shared.timekeeping.utility import days_to_datetime
 from mpas_analysis.shared.climatology import compute_climatology
@@ -283,13 +283,10 @@ class ComputeRegionalProfileTimeSeriesSubtask(AnalysisTask):
         outputFileName = '{}/regionalProfiles_{}_{:04d}-{:04d}.nc'.format(
             outputDirectory, timeSeriesName, self.startYear, self.endYear)
 
-        inputFiles = sorted(self.historyStreams.readpath(
-            'timeSeriesStatsMonthlyOutput', startDate=startDate,
-            endDate=endDate, calendar=self.calendar))
-
-        years, months = get_files_year_month(inputFiles,
-                                             self.historyStreams,
-                                             'timeSeriesStatsMonthlyOutput')
+        historyDict = self.historyFiles['timeSeriesStatsMonthlyOutput']
+        inputFiles = historyDict['files']
+        years = historyDict['years']
+        months = historyDict['months']
 
         variableList = [field['mpas'] for field in self.fields]
 

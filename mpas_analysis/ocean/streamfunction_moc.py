@@ -23,7 +23,7 @@ from mpas_analysis.shared.plot import plot_vertical_section_comparison, \
     timeseries_analysis_plot, savefig
 
 from mpas_analysis.shared.io.utility import build_config_full_path, \
-    make_directories, get_files_year_month, get_region_mask
+    make_directories, get_region_mask
 
 from mpas_analysis.shared.io import open_mpas_dataset\
 
@@ -964,13 +964,11 @@ class ComputeMOCTimeSeriesSubtask(AnalysisTask):
         dLat = binBoundaryMocStreamfunction - 26.5
         indlat26 = np.where(np.abs(dLat) == np.amin(np.abs(dLat)))
 
-        inputFiles = sorted(self.historyStreams.readpath(
-            streamName, startDate=self.startDate,
-            endDate=self.endDate, calendar=self.calendar))
 
-        years, months = get_files_year_month(inputFiles,
-                                             self.historyStreams,
-                                             'timeSeriesStatsMonthlyOutput')
+        historyDict = self.historyFiles[streamName]
+        inputFiles = historyDict['files']
+        years = historyDict['years']
+        months = historyDict['months']
 
         mocRegion = np.zeros(len(inputFiles))
         times = np.zeros(len(inputFiles))
@@ -1101,13 +1099,10 @@ class ComputeMOCTimeSeriesSubtask(AnalysisTask):
         regionCellMask = dictRegion['cellMask']
 
         streamName = 'timeSeriesStatsMonthlyOutput'
-        inputFiles = sorted(self.historyStreams.readpath(
-            streamName, startDate=self.startDate,
-            endDate=self.endDate, calendar=self.calendar))
-
-        years, months = get_files_year_month(inputFiles,
-                                             self.historyStreams,
-                                             'timeSeriesStatsMonthlyOutput')
+        historyDict = self.historyFiles[streamName]
+        inputFiles = historyDict['files']
+        years = historyDict['years']
+        months = historyDict['months']
 
         mocRegion = np.zeros(len(inputFiles))
         times = np.zeros(len(inputFiles))

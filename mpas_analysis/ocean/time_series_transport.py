@@ -25,7 +25,7 @@ from mpas_analysis.shared.plot import timeseries_analysis_plot, savefig, \
 from mpas_analysis.shared.io import open_mpas_dataset, write_netcdf
 
 from mpas_analysis.shared.io.utility import build_config_full_path, \
-    get_files_year_month, decode_strings
+    decode_strings
 
 from mpas_analysis.shared.html import write_image_xml
 
@@ -236,13 +236,10 @@ class ComputeTransportSubtask(AnalysisTask):
         outFileName = '{}/transport_{:04d}-{:04d}.nc'.format(
             outputDirectory, self.startYear, self.endYear)
 
-        inputFiles = sorted(self.historyStreams.readpath(
-            'timeSeriesStatsMonthlyOutput', startDate=startDate,
-            endDate=endDate, calendar=self.calendar))
-
-        years, months = get_files_year_month(inputFiles,
-                                             self.historyStreams,
-                                             'timeSeriesStatsMonthlyOutput')
+        historyDict = self.historyFiles['timeSeriesStatsMonthlyOutput']
+        inputFiles = historyDict['files']
+        years = historyDict['years']
+        months = historyDict['months']
 
         variableList = ['timeMonthly_avg_layerThickness']
         with open_mpas_dataset(fileName=inputFiles[0],
