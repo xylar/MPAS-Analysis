@@ -227,13 +227,6 @@ class RegionalTSDiagrams(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(RegionalTSDiagrams, self).setup_and_check()
-
         # don't add the variables and seasons to mpasClimatologyTask until
         # we're sure this subtask is supposed to run
         variableList = ['timeMonthly_avg_activeTracers_temperature',
@@ -893,12 +886,6 @@ class PlotRegionTSDiagramSubtask(AnalysisTask):
         # Authors
         # -------
         # Xylar Asay-Davis
-
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #   self.inDirectory, self.plotsDirectory, self.namelist, self.streams
-        #   self.calendar
-        super(PlotRegionTSDiagramSubtask, self).setup_and_check()
 
         self.xmlFileNames = ['{}/TS_diagram_{}_{}.xml'.format(
             self.plotsDirectory, self.prefix, self.season)]

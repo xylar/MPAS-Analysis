@@ -125,13 +125,6 @@ class ComputeAnomalySubtask(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(ComputeAnomalySubtask, self).setup_and_check()
-
         startDate = self.config.get('timeSeries', 'startDate')
         endDate = self.config.get('timeSeries', 'endDate')
 

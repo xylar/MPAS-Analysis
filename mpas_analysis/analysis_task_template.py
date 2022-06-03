@@ -137,10 +137,10 @@ class MyTask(AnalysisTask):
         # AnalysisTask.<method>, since AnalysisTask is the "super" or parent
         # class of MyTask.  In this case, we first call Analysis.__init__(...)
         # before doing our own initialization.
-        super(MyTask, self).__init__(config=config,
-                                     taskName='myTask',
-                                     componentName='component',
-                                     tags=['tag1', 'tag2'])
+        super().__init__(config=config,
+                         taskName='myTask',
+                         componentName='component',
+                         tags=['tag1', 'tag2'])
 
         # then, store any additional arguments for use in setup_and_check, run
         # or helper methods.  Extra arguments would likely include things like
@@ -203,20 +203,6 @@ class MyTask(AnalysisTask):
         # -------
         # <List of authors>
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        # Here, change MyTask to the name of your task but don't make any other
-        # changes
-        # Again, super(MyTask, self).<method>() is a way of calling
-        # AnalysisTask.<method>, since AnalysisTask is the "super" or parent
-        # class of MyTask.  In this case, we first call
-        # Analysis.setup_and_check() before doing our own setup and checking.
-        super(MyTask, self).setup_and_check()
-
-        # then, perform additional checks specific to this analysis.
         # Change or remove these as needed.
 
         # This checks if myArg was one of the allowed values, and raises an

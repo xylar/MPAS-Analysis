@@ -192,12 +192,6 @@ class ComputeTransportSubtask(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #   self.inDirectory, self.plotsDirectory, self.namelist, self.streams
-        #   self.calendar
-        super(ComputeTransportSubtask, self).setup_and_check()
-
         self.check_analysis_enabled(
             analysisOptionName='config_am_timeseriesstatsmonthly_enable',
             raiseException=True)

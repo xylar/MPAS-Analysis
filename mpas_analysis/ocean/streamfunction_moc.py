@@ -266,13 +266,6 @@ class ComputeMOCClimatologySubtask(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(ComputeMOCClimatologySubtask, self).setup_and_check()
-
         self.startYear = self.mpasClimatologyTask.startYear
         self.startDate = self.mpasClimatologyTask.startDate
         self.endYear = self.mpasClimatologyTask.endYear
@@ -645,13 +638,6 @@ class PlotMOCClimatologySubtask(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(PlotMOCClimatologySubtask, self).setup_and_check()
-
         config = self.config
 
         self.startYear = config.getint('climatology', 'startYear')
@@ -849,13 +835,6 @@ class ComputeMOCTimeSeriesSubtask(AnalysisTask):
         # Authors
         # -------
         # Xylar Asay-Davis
-
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(ComputeMOCTimeSeriesSubtask, self).setup_and_check()
 
         config = self.config
 
@@ -1322,13 +1301,6 @@ class PlotMOCTimeSeriesSubtask(AnalysisTask):
         # Authors
         # -------
         # Xylar Asay-Davis
-
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(PlotMOCTimeSeriesSubtask, self).setup_and_check()
 
         config = self.config
 

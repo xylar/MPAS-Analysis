@@ -186,13 +186,6 @@ class ComputeTransectMasksSubtask(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(ComputeTransectMasksSubtask, self).setup_and_check()
-
         self.obsFileName = self.restartFile
 
         self.maskSubdirectory = build_config_full_path(self.config, 'output',

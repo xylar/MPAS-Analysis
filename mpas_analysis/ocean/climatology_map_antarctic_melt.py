@@ -67,7 +67,7 @@ class ClimatologyMapAntarcticMelt(AnalysisTask):
 
         fieldName = 'meltRate'
         # call the constructor from the base class (AnalysisTask)
-        super(ClimatologyMapAntarcticMelt, self).__init__(
+        super().__init__(
             config=config, taskName='climatologyMapAntarcticMelt',
             componentName='ocean',
             tags=['climatology', 'horizontalMap', fieldName,
@@ -175,10 +175,6 @@ class ClimatologyMapAntarcticMelt(AnalysisTask):
         # Authors
         # -------
         # Xylar Asay-Davis
-
-        # first, call setup_and_check from the base class
-        # (AnalysisTask), which will perform some common setup
-        super(ClimatologyMapAntarcticMelt, self).setup_and_check()
 
         landIceFluxMode = self.namelist.get('config_land_ice_flux_mode')
         if landIceFluxMode not in ['standalone', 'coupled']:

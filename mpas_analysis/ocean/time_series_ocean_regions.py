@@ -459,13 +459,6 @@ class ComputeRegionTimeSeriesSubtask(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(ComputeRegionTimeSeriesSubtask, self).setup_and_check()
-
         self.check_analysis_enabled(
             analysisOptionName='config_am_timeseriesstatsmonthly_enable',
             raiseException=True)
@@ -1075,12 +1068,6 @@ class PlotRegionTimeSeriesSubtask(AnalysisTask):
         # Authors
         # -------
         # Xylar Asay-Davis
-
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #   self.inDirectory, self.plotsDirectory, self.namelist, self.streams
-        #   self.calendar
-        super(PlotRegionTimeSeriesSubtask, self).setup_and_check()
 
         self.variables = self.config.getexpression(self.sectionName,
                                                    'variables')

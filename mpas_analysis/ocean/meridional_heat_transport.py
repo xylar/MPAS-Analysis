@@ -81,13 +81,6 @@ class MeridionalHeatTransport(AnalysisTask):
         # -------
         # Mark Petersen, Milena Veneziani, Xylar Asay-Davis
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(MeridionalHeatTransport, self).setup_and_check()
-
         self.startYear = self.mpasClimatologyTask.startYear
         self.startDate = self.mpasClimatologyTask.startDate
         self.endYear = self.mpasClimatologyTask.endYear

@@ -44,7 +44,7 @@ class ClimatologyMapBGC(AnalysisTask):
         mpasClimatologyTask : ``MpasClimatologyTask``
             The task that produced the climatology to be remapped and plotted
 
-        controlconfig : mpas_tools.config.MpasConfigParser, optional
+        controlConfig : mpas_tools.config.MpasConfigParser, optional
             Configuration options for a control run (if any)
 
         Authors
@@ -55,7 +55,7 @@ class ClimatologyMapBGC(AnalysisTask):
 
         bgcVars = config.getexpression('climatologyMapBGC', 'variables')
 
-        super(ClimatologyMapBGC, self).__init__(
+        super().__init__(
             config=config, taskName='climatologyMapBGC',
             componentName='ocean',
             tags=['climatology', 'horizontalMap', 'BGC'] + bgcVars)
@@ -213,7 +213,6 @@ class ClimatologyMapBGC(AnalysisTask):
         # Authors
         # -------
         # Riley X. Brady
-        super(ClimatologyMapBGC, self).setup_and_check()
 
         # Clarify that the user is doing preindustrial vs. modern
         preindustrial = self.config.getboolean('climatologyMapBGC',

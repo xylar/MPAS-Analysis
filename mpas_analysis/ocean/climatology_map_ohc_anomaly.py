@@ -170,13 +170,6 @@ class ClimatologyMapOHCAnomaly(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(ClimatologyMapOHCAnomaly, self).setup_and_check()
-
         startYear, endYear = self.mpasClimatologyTask.get_start_and_end()
         refStartYear, refEndYear = \
             self.refYearClimatolgyTask.get_start_and_end()
@@ -274,11 +267,6 @@ class RemapMpasOHCClimatology(RemapMpasClimatologySubtask):
         # Authors
         # -------
         # Xylar Asay-Davis
-
-        # first, call setup_and_check from the base class
-        # (RemapMpasClimatologySubtask), which will set up remappers and add
-        # variables to mpasClimatologyTask
-        super(RemapMpasOHCClimatology, self).setup_and_check()
 
         # don't add the variables and seasons to mpasClimatologyTask until
         # we're sure this subtask is supposed to run

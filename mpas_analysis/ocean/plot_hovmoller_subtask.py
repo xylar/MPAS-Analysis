@@ -198,13 +198,6 @@ class PlotHovmollerSubtask(AnalysisTask):
         # -------
         # Xylar Asay-Davis, Greg Streletz
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(PlotHovmollerSubtask, self).setup_and_check()
-
         config = self.config
 
         if self.controlConfig is not None:

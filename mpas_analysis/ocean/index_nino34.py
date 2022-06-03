@@ -96,13 +96,6 @@ class IndexNino34(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #     self.runDirectory , self.historyDirectory, self.plotsDirectory,
-        #     self.namelist, self.runStreams, self.historyStreams,
-        #     self.calendar
-        super(IndexNino34, self).setup_and_check()
-
         startDate = self.config.get('index', 'startDate')
         endDate = self.config.get('index', 'endDate')
 
