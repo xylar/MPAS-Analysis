@@ -467,7 +467,66 @@ class AnalysisTask(Process):
         self._logFileName = '{}/{}.log'.format(logsDirectory,
                                                self.fullTaskName)
 
-# }}}
+    def get_history_files(self, streamName, startYear=None, endYear=None,
+                          analysisType=None, anomalyRefYear=None):
+        """
+        Get a list of file names from the given stream, optionally within the
+        given time range
+
+        Parameters
+        ----------
+        streamName : str
+            The name of a stream that the files were output from
+
+        startYear, endYear : int, optional
+            The range of years to restrict the files to
+
+        analysisType : str, optional
+            Type of analysis that the history files will be used for
+            (typically one or more of "climatology", "timeSeries" and "index"),
+            used here to determine the start and end years from config options
+
+        anomalyRefYear : int, optional
+            A reference year from which to take anomalies.  Files (and years,
+            months and days) will be included from this year.
+
+        Returns
+        -------
+        fileNames : list
+            A list of files from the stream in the given range of years
+
+        years, months, days : list
+            A list of years, months and days for the date of each file
+        """
+        historyDict = self.historyFiles[streamName]
+        fileNames = historyDict['files']
+        years = historyDict['years']
+        months = historyDict['months']
+        days = historyDict['days']
+        if analysisType is not None:
+            startYear = self.config.getint(analysisType, 'startYear')
+            endYear = self.config.getint(analysisType, 'endYear')
+
+        if startYear is not None or endYear is not None:
+            years = historyDict['years']
+            if startYear is None:
+                startYear = years[0]
+            if endYear is None:
+                endYear = years[-1]
+
+            if anomalyRefYear is not None:
+                indices = [index for index in range(len(years)) if
+                           (startYear <= years[index] <= endYear or
+                            years[index] == anomalyRefYear)]
+            else:
+                indices = [index for index in range(len(years)) if
+                             startYear <= years[index] <= endYear]
+            fileNames = fileNames[indices]
+            years = years[indices]
+            months = months[indices]
+            days = days[indices]
+
+        return fileNames, years, months, days
 
 
 class AnalysisFormatter(logging.Formatter):
