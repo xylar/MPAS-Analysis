@@ -140,7 +140,8 @@ class MyTask(AnalysisTask):
         super().__init__(config=config,
                          taskName='myTask',
                          componentName='component',
-                         tags=['tag1', 'tag2'])
+                         tags=['tag1', 'tag2'],
+                         streamNames=['timeSeriesStatsMonthlyOutput'])
 
         # then, store any additional arguments for use in setup_and_check, run
         # or helper methods.  Extra arguments would likely include things like
@@ -231,9 +232,7 @@ class MyTask(AnalysisTask):
             raiseException=False)
 
         # The following is an example of how you could get a list of input
-        # files from a specific stream (timeSeriesStats).  AM output should
-        # be taken from the historyStreams, not runStreams, to support ACME
-        # short-term archiving capabilities
+        # files from a specific stream (timeSeriesStatsMonthly).
 
         # Get a list of timeSeriesStats output files from the streams file,
         # reading only those that are between the start and end dates.
@@ -242,15 +241,11 @@ class MyTask(AnalysisTask):
         streamName = 'timeSeriesStatsMonthlyOutput'
         startDate = self.config.get('climatology', 'startDate')
         endDate = self.config.get('climatology', 'endDate')
-        self.inputFiles = self.historyStreams.readpath(streamName,
-                                                       startDate=startDate,
-                                                       endDate=endDate,
-                                                       calendar=self.calendar)
+        self.inputFiles = self.historyFiles[streamName]['files']
 
         if len(self.inputFiles) == 0:
             raise IOError('No files were found in stream {} between {} and '
-                          '{}.'.format(streamName, self.startDate,
-                                       self.endDate))
+                          '{}.'.format(streamName, startDate, endDate))
 
         # For climatologies, update the start and end year based on the files
         # that are actually available

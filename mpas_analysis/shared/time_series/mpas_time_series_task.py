@@ -92,12 +92,13 @@ class MpasTimeSeriesTask(AnalysisTask):
             taskName = 'mpas{}'.format(suffix)
 
         # call the constructor from the base class (AnalysisTask)
-        super(MpasTimeSeriesTask, self).__init__(
+        super().__init__(
             config=config,
             taskName=taskName,
             subtaskName=subtaskName,
             componentName=componentName,
-            tags=tags)
+            tags=tags,
+            streamNames=['timeSeriesStatsMonthlyOutput'])
 
     def add_variables(self, variableList):
         """
@@ -163,9 +164,7 @@ class MpasTimeSeriesTask(AnalysisTask):
         startDate = config.get(self.section, 'startDate')
         endDate = config.get(self.section, 'endDate')
         streamName = 'timeSeriesStatsMonthlyOutput'
-        self.inputFiles = self.historyStreams.readpath(
-            streamName, startDate=startDate, endDate=endDate,
-            calendar=self.calendar)
+        self.inputFiles = self.historyFiles[streamName]['files']
 
         if len(self.inputFiles) == 0:
             raise IOError('No files were found in stream {} between {} and '

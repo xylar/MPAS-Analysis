@@ -218,12 +218,13 @@ class ComputeRegionalProfileTimeSeriesSubtask(AnalysisTask):
         subtaskName = 'compute{}Profiles_{:04d}-{:04d}'.format(
             regionGroup.replace(' ', ''), startYear, endYear)
         # first, call the constructor from the base class (AnalysisTask)
-        super(ComputeRegionalProfileTimeSeriesSubtask, self).__init__(
+        super().__init__(
             config=parentTask.config,
             taskName=parentTask.taskName,
             componentName=parentTask.componentName,
             tags=parentTask.tags,
-            subtaskName=subtaskName)
+            subtaskName=subtaskName,
+            streamNames=['timeSeriesStatsMonthlyOutput'])
 
         parentTask.add_subtask(self)
         self.masksSubtask = masksSubtask

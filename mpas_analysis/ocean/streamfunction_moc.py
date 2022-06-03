@@ -244,7 +244,9 @@ class ComputeMOCClimatologySubtask(AnalysisTask):
             taskName=parentTask.taskName,
             componentName=parentTask.componentName,
             tags=parentTask.tags,
-            subtaskName='computeMOCClimatology')
+            subtaskName='computeMOCClimatology',
+            streamNames=['timeSeriesStatsMonthlyOutput',
+                         'mocStreamfunctionOutput'])
 
         self.mpasClimatologyTask = mpasClimatologyTask
         self.run_after(mpasClimatologyTask)
@@ -358,13 +360,8 @@ class ComputeMOCClimatologySubtask(AnalysisTask):
         binBoundaryMocStreamfunction = None
         # first try timeSeriesStatsMonthly for bin boundaries, then try
         # mocStreamfunctionOutput stream as a backup option
-        for streamName in ['timeSeriesStatsMonthlyOutput',
-                           'mocStreamfunctionOutput']:
-            try:
-                inputFileName = self.historyStreams.readpath(streamName)[0]
-            except ValueError:
-                raise IOError('At least one file from stream {} is needed '
-                              'to compute MOC'.format(streamName))
+        for streamName in self.streamNames:
+            inputFileName = self.historyFiles[streamName]['files'][0]
 
             with xr.open_dataset(inputFileName) as ds:
                 if 'binBoundaryMocStreamfunction' in ds.data_vars:
@@ -808,13 +805,14 @@ class ComputeMOCTimeSeriesSubtask(AnalysisTask):
         # Xylar Asay-Davis
 
         # first, call the constructor from the base class (AnalysisTask)
-        super(ComputeMOCTimeSeriesSubtask, self).__init__(
+        super().__init__(
             config=parentTask.config,
             taskName=parentTask.taskName,
             componentName=parentTask.componentName,
             tags=parentTask.tags,
-            subtaskName='computeMOCTimeSeries_{:04d}-{:04d}'.format(
-                startYear, endYear))
+            subtaskName=f'computeMOCTimeSeries_{startYear:04d}-{endYear:04d}',
+            streamNames=['timeSeriesStatsMonthlyOutput',
+                         'mocStreamfunctionOutput'])
 
         self.maskSubtask = maskSubtask
         self.run_after(maskSubtask)
@@ -908,16 +906,13 @@ class ComputeMOCTimeSeriesSubtask(AnalysisTask):
         outputFileName = '{}/mocTimeSeries_{:04d}-{:04d}.nc'.format(
             outputDirectory, self.startYear, self.endYear)
 
-        streamName = 'timeSeriesStatsMonthlyOutput'
-
         # Get bin latitudes and index of 26.5N
         binBoundaryMocStreamfunction = None
         # first try timeSeriesStatsMonthly for bin boundaries, then try
         # mocStreamfunctionOutput stream as a backup option
-        for streamName in ['timeSeriesStatsMonthlyOutput',
-                           'mocStreamfunctionOutput']:
+        for streamName in self.streamNames:
             try:
-                inputFileName = self.historyStreams.readpath(streamName)[0]
+                inputFileName = self.historyFiles[streamName]['files'][0]
             except ValueError:
                 raise IOError('At least one file from stream {} is needed '
                               'to compute MOC'.format(streamName))
@@ -937,7 +932,7 @@ class ComputeMOCTimeSeriesSubtask(AnalysisTask):
         dLat = binBoundaryMocStreamfunction - 26.5
         indlat26 = np.where(np.abs(dLat) == np.amin(np.abs(dLat)))
 
-
+        streamName = 'timeSeriesStatsMonthlyOutput'
         historyDict = self.historyFiles[streamName]
         inputFiles = historyDict['files']
         years = historyDict['years']

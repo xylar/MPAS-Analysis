@@ -60,11 +60,12 @@ class TimeSeriesTransport(AnalysisTask):
         # Xylar Asay-Davis
 
         # first, call the constructor from the base class (AnalysisTask)
-        super(TimeSeriesTransport, self).__init__(
+        super().__init__(
             config=config,
             taskName='timeSeriesTransport',
             componentName='ocean',
-            tags=['timeSeries', 'transport'])
+            tags=['timeSeries', 'transport'],
+            streamNames=['timeSeriesStatsMonthlyOutput'])
 
         startYear = config.getint('timeSeries', 'startYear')
         endYear = config.get('timeSeries', 'endYear')

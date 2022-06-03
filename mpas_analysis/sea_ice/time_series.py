@@ -69,11 +69,12 @@ class TimeSeriesSeaIce(AnalysisTask):
         # Xylar Asay-Davis
 
         # first, call the constructor from the base class (AnalysisTask)
-        super(TimeSeriesSeaIce, self).__init__(
+        super().__init__(
             config=config,
             taskName='timeSeriesSeaIceAreaVol',
             componentName='seaIce',
-            tags=['timeSeries', 'publicObs', 'arctic', 'antarctic'])
+            tags=['timeSeries', 'publicObs', 'arctic', 'antarctic'],
+            streamNames=['timeSeriesStatsMonthlyOutput'])
 
         self.mpasTimeSeriesTask = mpasTimeSeriesTask
         self.controlConfig = controlConfig
@@ -92,8 +93,6 @@ class TimeSeriesSeaIce(AnalysisTask):
         # Authors
         # -------
         # Xylar Asay-Davis
-
-error_count
 
         config = self.config
 
@@ -115,11 +114,7 @@ error_count
         streamName = 'timeSeriesStatsMonthlyOutput'
         self.startDate = config.get('timeSeries', 'startDate')
         self.endDate = config.get('timeSeries', 'endDate')
-        self.inputFiles = \
-            self.historyStreams.readpath(streamName,
-                                         startDate=self.startDate,
-                                         endDate=self.endDate,
-                                         calendar=self.calendar)
+        self.inputFiles = self.historyFiles[streamName]['files']
 
         if len(self.inputFiles) == 0:
             raise IOError('No files were found in stream {} between {} and '

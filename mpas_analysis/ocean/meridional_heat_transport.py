@@ -62,11 +62,13 @@ class MeridionalHeatTransport(AnalysisTask):
         # Xylar Asay-Davis
 
         # first, call the constructor from the base class (AnalysisTask)
-        super(MeridionalHeatTransport, self).__init__(
+        super().__init__(
             config=config,
             taskName='meridionalHeatTransport',
             componentName='ocean',
-            tags=['climatology', 'publicObs'])
+            tags=['climatology', 'publicObs'],
+            streamNames=['timeSeriesStatsMonthlyOutput',
+                         'meridionalHeatTransportOutput'])
 
         self.mpasClimatologyTask = mpasClimatologyTask
         self.run_after(mpasClimatologyTask)
@@ -194,13 +196,8 @@ class MeridionalHeatTransport(AnalysisTask):
             binBoundaryMerHeatTrans = None
             # first try timeSeriesStatsMonthly for bin boundaries, then try
             # meridionalHeatTransport stream as a backup option
-            for streamName in ['timeSeriesStatsMonthlyOutput',
-                               'meridionalHeatTransportOutput']:
-                try:
-                    inputFile = self.historyStreams.readpath(streamName)[0]
-                except ValueError:
-                    raise IOError('At least one file from stream {} is needed '
-                                  'to compute MHT'.format(streamName))
+            for streamName in self.streamNames:
+                inputFile = self.historyFiles[streamName]['files'][0]
 
                 with xr.open_dataset(inputFile) as ds:
                     if 'binBoundaryMerHeatTrans' in ds.data_vars:

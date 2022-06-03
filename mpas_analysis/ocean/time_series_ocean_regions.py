@@ -431,13 +431,13 @@ class ComputeRegionTimeSeriesSubtask(AnalysisTask):
         suffix = regionGroup[0].upper() + regionGroup[1:].replace(' ', '')
 
         # first, call the constructor from the base class (AnalysisTask)
-        super(ComputeRegionTimeSeriesSubtask, self).__init__(
+        super().__init__(
             config=parentTask.config,
             taskName=parentTask.taskName,
             componentName=parentTask.componentName,
             tags=parentTask.tags,
-            subtaskName='compute{}_{:04d}-{:04d}'.format(suffix, startYear,
-                                                         endYear))
+            subtaskName=f'compute{suffix}_{startYear:04d}-{endYear:04d}',
+            streamNames=['timeSeriesStatsMonthlyOutput'])
 
         parentTask.add_subtask(self)
         self.startYear = startYear
