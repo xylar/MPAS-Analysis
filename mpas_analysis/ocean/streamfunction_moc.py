@@ -351,13 +351,7 @@ class ComputeMOCClimatologySubtask(AnalysisTask):
         regionNames.append('Global')
 
         # Read in depth and bin latitudes
-        try:
-            restartFileName = self.runStreams.readpath('restart')[0]
-        except ValueError:
-            raise IOError('No MPAS-O restart file found: need at least '
-                          'one for MHT calcuation')
-
-        with xr.open_dataset(restartFileName) as dsRestart:
+        with xr.open_dataset(self.restartFile) as dsRestart:
             refBottomDepth = dsRestart.refBottomDepth.values
 
         nVertLevels = len(refBottomDepth)
@@ -478,7 +472,7 @@ class ComputeMOCClimatologySubtask(AnalysisTask):
             return
 
         dvEdge, areaCell, refBottomDepth, latCell, nVertLevels, \
-            refTopDepth, refLayerThickness = _load_mesh(self.runStreams)
+            refTopDepth, refLayerThickness = _load_mesh(self.restartFile)
 
         regionNames = config.getexpression(self.sectionName, 'regionNames')
 
@@ -1073,7 +1067,7 @@ class ComputeMOCTimeSeriesSubtask(AnalysisTask):
             outputDirectory, self.startYear, self.endYear)
 
         dvEdge, areaCell, refBottomDepth, latCell, nVertLevels, \
-            refTopDepth, refLayerThickness = _load_mesh(self.runStreams)
+            refTopDepth, refLayerThickness = _load_mesh(self.restartFile)
 
         mpasMeshName = config.get('input', 'mpasMeshName')
 
@@ -1445,13 +1439,8 @@ class PlotMOCTimeSeriesSubtask(AnalysisTask):
         return dsMOCTimeSeries
 
 
-def _load_mesh(runStreams):
+def _load_mesh(restartFile):
     # Load mesh related variables
-    try:
-        restartFile = runStreams.readpath('restart')[0]
-    except ValueError:
-        raise IOError('No MPAS-O restart file found: need at least one '
-                      'restart file for MOC calculation')
     ncFile = netCDF4.Dataset(restartFile, mode='r')
     dvEdge = ncFile.variables['dvEdge'][:]
     areaCell = ncFile.variables['areaCell'][:]

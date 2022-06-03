@@ -179,7 +179,6 @@ class ComputeMeltSubtask(AnalysisTask):
         self.run_after(masksSubtask)
 
         self.iceShelvesToPlot = iceShelvesToPlot
-        self.restartFileName = None
         self.startYear = startYear
         self.endYear = endYear
         self.startDate = '{:04d}-01-01_00:00:00'.format(self.startYear)
@@ -221,13 +220,6 @@ class ComputeMeltSubtask(AnalysisTask):
                              '    to be standalone or coupled.  Otherwise, no '
                              'melt rates are available \n'
                              '    for plotting.')
-
-        # Load mesh related variables
-        try:
-            self.restartFileName = self.runStreams.readpath('restart')[0]
-        except ValueError:
-            raise IOError('No MPAS-O restart file found: need at least one '
-                          'restart file for Antarctic melt calculations')
 
         self.mpasTimeSeriesTask.add_variables(variableList=self.variableList)
 
@@ -281,10 +273,7 @@ class ComputeMeltSubtask(AnalysisTask):
                                 'it.'.format(outFileName))
             os.remove(outFileName)
 
-        restartFileName = \
-            mpasTimeSeriesTask.runStreams.readpath('restart')[0]
-
-        dsRestart = xarray.open_dataset(restartFileName)
+        dsRestart = xarray.open_dataset(self.restartFile)
         landIceFraction = dsRestart.landIceFraction.isel(Time=0)
         areaCell = dsRestart.areaCell
 

@@ -595,12 +595,7 @@ class ComputeRegionTSSubtask(AnalysisTask):
             cellsChunk = 32768
             chunk = {'nCells': cellsChunk}
 
-            try:
-                restartFileName = self.runStreams.readpath('restart')[0]
-            except ValueError:
-                raise IOError('No MPAS-O restart file found: need at least one'
-                              ' restart file to plot T-S diagrams')
-            dsRestart = xarray.open_dataset(restartFileName)
+            dsRestart = xarray.open_dataset(self.restartFile)
             dsRestart = dsRestart.isel(Time=0).chunk(chunk)
 
             regionMaskFileName = self.mpasMasksSubtask.maskFileName

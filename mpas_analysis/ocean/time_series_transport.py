@@ -174,7 +174,6 @@ class ComputeTransportSubtask(AnalysisTask):
         self.run_after(masksSubtask)
 
         self.transectsToPlot = transectsToPlot
-        self.restartFileName = None
 
     def setup_and_check(self):
         """
@@ -202,13 +201,6 @@ class ComputeTransportSubtask(AnalysisTask):
         self.check_analysis_enabled(
             analysisOptionName='config_am_timeseriesstatsmonthly_enable',
             raiseException=True)
-
-        # Load mesh related variables
-        try:
-            self.restartFileName = self.runStreams.readpath('restart')[0]
-        except ValueError:
-            raise IOError('No MPAS-O restart file found: need at least one '
-                          'restart file for transport calculations')
 
     def run_task(self):
         """
@@ -287,7 +279,7 @@ class ComputeTransportSubtask(AnalysisTask):
         # figure out the indices of the transects to plot
         maskTransectNames = decode_strings(dsTransectMask.transectNames)
 
-        dsMesh = xarray.open_dataset(self.restartFileName)
+        dsMesh = xarray.open_dataset(self.restartFile)
         dsMesh = dsMesh[['dvEdge', 'cellsOnEdge']]
         dsMesh.load()
         dvEdge = dsMesh.dvEdge

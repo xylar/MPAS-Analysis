@@ -289,11 +289,6 @@ class ComputeRegionDepthMasksSubtask(AnalysisTask):
             return
 
         # Load mesh related variables
-        try:
-            restartFileName = self.runStreams.readpath('restart')[0]
-        except ValueError:
-            raise IOError('No MPAS-O restart file found: need at least one '
-                          'restart file for ocean region time series')
 
         if config.has_option(sectionName, 'zmin'):
             config_zmin = config.getfloat(sectionName, 'zmin')
@@ -305,7 +300,7 @@ class ComputeRegionDepthMasksSubtask(AnalysisTask):
         else:
             config_zmax = None
 
-        dsRestart = xarray.open_dataset(restartFileName).isel(Time=0)
+        dsRestart = xarray.open_dataset(self.restartFile).isel(Time=0)
         zMid = compute_zmid(dsRestart.bottomDepth, dsRestart.maxLevelCell-1,
                             dsRestart.layerThickness)
         areaCell = dsRestart.areaCell

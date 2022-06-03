@@ -314,8 +314,7 @@ class ComputeRegionalProfileTimeSeriesSubtask(AnalysisTask):
             return
 
         # get areaCell
-        restartFileName = \
-            self.runStreams.readpath('restart')[0]
+        restartFileName = self.restartFile
 
         dsRestart = xr.open_dataset(restartFileName)
         dsRestart = dsRestart.isel(Time=0)
@@ -401,13 +400,7 @@ class ComputeRegionalProfileTimeSeriesSubtask(AnalysisTask):
 
         # Note: restart file, not a mesh file because we need refBottomDepth,
         # not in a mesh file
-        try:
-            restartFile = self.runStreams.readpath('restart')[0]
-        except ValueError:
-            raise IOError('No MPAS-O restart file found: need at least one '
-                          'restart file for plotting time series vs. depth')
-
-        with xr.open_dataset(restartFile) as dsRestart:
+        with xr.open_dataset(self.restartFile) as dsRestart:
             depths = dsRestart.refBottomDepth.values
             z = np.zeros(depths.shape)
             z[0] = -0.5 * depths[0]

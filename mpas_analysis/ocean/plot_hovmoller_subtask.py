@@ -269,15 +269,10 @@ class PlotHovmollerSubtask(AnalysisTask):
 
         # Note: restart file, not a mesh file because we need refBottomDepth,
         # not in a mesh file
-        try:
-            restartFile = self.runStreams.readpath('restart')[0]
-        except ValueError:
-            raise IOError('No MPAS-O restart file found: need at least one '
-                          'restart file for plotting time series vs. depth')
 
         # Define/read in general variables
         self.logger.info('  Read in depth...')
-        with xr.open_dataset(restartFile) as dsRestart:
+        with xr.open_dataset(self.restartFile) as dsRestart:
             # reference depth [m]
             depths = dsRestart.refBottomDepth.values
             z = np.zeros(depths.shape)

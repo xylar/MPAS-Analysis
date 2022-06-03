@@ -424,8 +424,7 @@ class AntarcticMeltTableSubtask(AnalysisTask):
                 dsRegionMask = dsRegionMask.isel(nRegions=regionIndices)
                 cellMasks = dsRegionMask.regionCellMasks.chunk({'nRegions': 10})
 
-                restartFileName = \
-                    self.runStreams.readpath('restart')[0]
+                restartFileName = self.restartFile
 
                 dsRestart = xr.open_dataset(restartFileName)
                 landIceFraction = dsRestart.landIceFraction.isel(Time=0)

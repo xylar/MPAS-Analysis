@@ -131,13 +131,6 @@ class TimeSeriesSeaIce(AnalysisTask):
                           '{}.'.format(streamName, self.startDate,
                                        self.endDate))
 
-        try:
-            self.restartFileName = self.runStreams.readpath('restart')[0]
-        except ValueError:
-            raise IOError('No MPAS-SeaIce restart file found: need at least '
-                          'one restart file to perform remapping of '
-                          'climatologies.')
-
         # these are redundant for now.  Later cleanup is needed where these
         # file names are reused in run()
         self.xmlFileNames = []
@@ -597,7 +590,7 @@ class TimeSeriesSeaIce(AnalysisTask):
             outFileNames[hemisphere] = outFileName
 
         dsTimeSeries = {}
-        dsMesh = xr.open_dataset(self.restartFileName)
+        dsMesh = xr.open_dataset(self.restartFile)
         dsMesh = dsMesh[['latCell', 'areaCell']]
         # Load data
         ds = open_mpas_dataset(
