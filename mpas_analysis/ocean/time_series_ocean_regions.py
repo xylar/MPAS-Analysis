@@ -495,10 +495,9 @@ class ComputeRegionTimeSeriesSubtask(AnalysisTask):
         outFileName = '{}/{}_{:04d}-{:04d}.nc'.format(
             outputDirectory, timeSeriesName, self.startYear, self.endYear)
 
-        historyDict = self.historyFiles['timeSeriesStatsMonthlyOutput']
-        inputFiles = historyDict['files']
-        years = historyDict['years']
-        months = historyDict['months']
+        inputFiles, years, months, _ = self.get_history_files(
+            streamName='timeSeriesStatsMonthlyOutput',
+            startYear=self.startYear, endYear=self.endYear)
 
         variables = config.getexpression(sectionName, 'variables')
 

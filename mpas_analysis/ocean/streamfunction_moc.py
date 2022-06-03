@@ -932,11 +932,9 @@ class ComputeMOCTimeSeriesSubtask(AnalysisTask):
         dLat = binBoundaryMocStreamfunction - 26.5
         indlat26 = np.where(np.abs(dLat) == np.amin(np.abs(dLat)))
 
-        streamName = 'timeSeriesStatsMonthlyOutput'
-        historyDict = self.historyFiles[streamName]
-        inputFiles = historyDict['files']
-        years = historyDict['years']
-        months = historyDict['months']
+        inputFiles, years, months, _ = self.get_history_files(
+            streamName='timeSeriesStatsMonthlyOutput',
+            startYear=self.startYear, endYear=self.endYear)
 
         mocRegion = np.zeros(len(inputFiles))
         times = np.zeros(len(inputFiles))
@@ -1066,11 +1064,9 @@ class ComputeMOCTimeSeriesSubtask(AnalysisTask):
         transectEdgeMaskSigns = dictRegion['transectEdgeMaskSigns']
         regionCellMask = dictRegion['cellMask']
 
-        streamName = 'timeSeriesStatsMonthlyOutput'
-        historyDict = self.historyFiles[streamName]
-        inputFiles = historyDict['files']
-        years = historyDict['years']
-        months = historyDict['months']
+        inputFiles, years, months, _ = self.get_history_files(
+            streamName='timeSeriesStatsMonthlyOutput',
+            startYear=self.startYear, endYear=self.endYear)
 
         mocRegion = np.zeros(len(inputFiles))
         times = np.zeros(len(inputFiles))

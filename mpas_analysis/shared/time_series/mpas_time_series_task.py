@@ -40,11 +40,11 @@ class MpasTimeSeriesTask(AnalysisTask):
     inputFiles : list of str
         A list of input files from which to extract the time series.
 
-    startDate, endDate : str
-        The start and end dates of the time series as strings
+    years : list
+        A list of the years in ``inputFiles``
 
-    startYear, endYear : int
-        The start and end years of the time series
+    months : list
+        A list of the months in ``inputFiles``
     """
 
     # Authors
@@ -85,6 +85,9 @@ class MpasTimeSeriesTask(AnalysisTask):
         tags = [section]
 
         self.allVariables = None
+        self.inputFiles = None
+        self.years = None
+        self.months = None
 
         if taskName is None:
             suffix = section[0].upper() + section[1:] + \
@@ -161,33 +164,21 @@ class MpasTimeSeriesTask(AnalysisTask):
 
         # get a list of timeSeriesStats output files from the streams file,
         # reading only those that are between the start and end dates
-        startDate = config.get(self.section, 'startDate')
-        endDate = config.get(self.section, 'endDate')
+        startYear = config.get(self.section, 'startYear')
+        endYear = config.get(self.section, 'endYear')
         streamName = 'timeSeriesStatsMonthlyOutput'
-        self.inputFiles = self.historyFiles[streamName]['files']
+        anomalyYear = self.anomalyRefYears['timeSeries']
+        # Make sure first year of data is included for computing anomalies
+        self.inputFiles, self.years, self.months, _ = self.get_history_files(
+            streamName, analysisType=self.section, anomalyYear=anomalyYear)
 
         if len(self.inputFiles) == 0:
-            raise IOError('No files were found in stream {} between {} and '
-                          '{}.'.format(streamName, startDate, endDate))
+            raise IOError(f'No files were found in stream {streamName} '
+                          f'between {startYear} and {endYear}.')
 
         self.runMessage = \
-            f'\nComputing MPAS time series from first year plus files:\n' \
-            f'    {os.path.basename(self.inputFiles[0])} through\n' \
-            f'    {os.path.basename(self.inputFiles[-1])}'
-
-        # Make sure first year of data is included for computing anomalies
-        anomalyYear = self.anomalyRefYears['timeSeries']
-        anomalyStartDate = '{:04d}-01-01_00:00:00'.format(anomalyYear)
-        anomalyEndDate = '{:04d}-12-31_23:59:59'.format(anomalyYear)
-        firstYearInputFiles = self.historyStreams.readpath(
-            streamName, startDate=anomalyStartDate,
-            endDate=anomalyEndDate,
-            calendar=self.calendar)
-        for fileName in firstYearInputFiles:
-            if fileName not in self.inputFiles:
-                self.inputFiles.append(fileName)
-
-        self.inputFiles = sorted(self.inputFiles)
+            f'\nComputing MPAS time series from first year plus:\n' \
+            f'    {startYear:04d} through {endYear:04d}'
 
         with xr.open_dataset(self.inputFiles[0]) as ds:
             self.allVariables = list(ds.data_vars.keys())
@@ -245,16 +236,14 @@ class MpasTimeSeriesTask(AnalysisTask):
                             break
 
                 if updateSubset:
-                    # add only input files wiht times that aren't already in
+                    # add only input files with times that aren't already in
                     # the output file
 
                     append = True
 
-                    fileNames = sorted(self.inputFiles)
-                    historyDict = \
-                        self.historyFiles['timeSeriesStatsMonthlyOutput']
-                    inYears = historyDict['years']
-                    inMonths = historyDict['months']
+                    fileNames = self.inputFiles
+                    inYears = self.years
+                    inMonths = self.months
 
                     inYears = numpy.array(inYears)
                     inMonths = numpy.array(inMonths)

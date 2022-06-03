@@ -223,10 +223,9 @@ class ComputeTransportSubtask(AnalysisTask):
         outFileName = '{}/transport_{:04d}-{:04d}.nc'.format(
             outputDirectory, self.startYear, self.endYear)
 
-        historyDict = self.historyFiles['timeSeriesStatsMonthlyOutput']
-        inputFiles = historyDict['files']
-        years = historyDict['years']
-        months = historyDict['months']
+        inputFiles, years, months, _ = self.get_history_files(
+            streamName='timeSeriesStatsMonthlyOutput',
+            startYear=self.startYear, endYear=self.endYear)
 
         variableList = ['timeMonthly_avg_layerThickness']
         with open_mpas_dataset(fileName=inputFiles[0],

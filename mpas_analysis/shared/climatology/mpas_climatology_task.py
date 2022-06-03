@@ -269,7 +269,9 @@ class MpasClimatologyTask(AnalysisTask):
 
         # get a list of timeSeriesStats output files from the streams file,
         # reading only those that are between the start and end dates
-        self.inputFiles = self.historyFiles[self.streamName]['files']
+        self.inputFiles, _, _, _ = self.get_history_files(
+            streamName='timeSeriesStatsMonthlyOutput',
+            startYear=self.startYear, endYear=self.endYear)
 
         if len(self.inputFiles) == 0:
             raise IOError('No files were found in stream {} between {} and '
@@ -400,9 +402,9 @@ class MpasClimatologyTask(AnalysisTask):
         config = self.config
 
         fileNames = sorted(self.inputFiles)
-        historyDict = self.historyFiles[self.streamName]
-        years = historyDict['years']
-        months = historyDict['months']
+        inputFiles, years, months, _ = self.get_history_files(
+            streamName=self.streamName, startYear=self.startYear,
+            endYear=self.endYear)
 
         climatologyOpDirectory = get_climatology_op_directory(config, self.op)
 

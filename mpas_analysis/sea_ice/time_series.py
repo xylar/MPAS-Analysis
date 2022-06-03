@@ -114,7 +114,10 @@ class TimeSeriesSeaIce(AnalysisTask):
         streamName = 'timeSeriesStatsMonthlyOutput'
         self.startDate = config.get('timeSeries', 'startDate')
         self.endDate = config.get('timeSeries', 'endDate')
-        self.inputFiles = self.historyFiles[streamName]['files']
+
+        self.inputFiles, _, _, _ = self.get_history_files(
+            streamName='timeSeriesStatsMonthlyOutput',
+            analysisType='timeSeries')
 
         if len(self.inputFiles) == 0:
             raise IOError('No files were found in stream {} between {} and '

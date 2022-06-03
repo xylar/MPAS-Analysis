@@ -241,11 +241,12 @@ class MyTask(AnalysisTask):
         streamName = 'timeSeriesStatsMonthlyOutput'
         startDate = self.config.get('climatology', 'startDate')
         endDate = self.config.get('climatology', 'endDate')
-        self.inputFiles = self.historyFiles[streamName]['files']
+        self.inputFiles, _, _, _ = self.get_history_files(
+            streamName, analysisType='climatology')
 
         if len(self.inputFiles) == 0:
-            raise IOError('No files were found in stream {} between {} and '
-                          '{}.'.format(streamName, startDate, endDate))
+            raise IOError(f'No files were found in stream {streamName} '
+                          f'between {startDate} and {endDate}.')
 
         # For climatologies, update the start and end year based on the files
         # that are actually available
