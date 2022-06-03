@@ -140,10 +140,11 @@ class TimeSeriesOHCAnomaly(AnalysisTask):
         # for convenience, rename the variables to simpler, shorter names
         ds = ds.rename(self.variableDict)
 
+        namelist = self.namelists['input']
         # specific heat [J/(kg*degC)]
-        cp = self.namelist.getfloat('config_specific_heat_sea_water')
+        cp = namelist.getfloat('config_specific_heat_sea_water')
         # [kg/m3]
-        rho = self.namelist.getfloat('config_density0')
+        rho = namelist.getfloat('config_density0')
 
         unitsScalefactor = 1e-22
 

@@ -176,13 +176,12 @@ class ClimatologyMapAntarcticMelt(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        landIceFluxMode = self.namelist.get('config_land_ice_flux_mode')
-        if landIceFluxMode not in ['standalone', 'coupled']:
-            raise ValueError('*** climatologyMapMeltAntarctic requires '
-                             'config_land_ice_flux_mode \n'
-                             '    to be standalone or coupled.  Otherwise, no '
-                             'melt rates are available \n'
-                             '    for plotting.')
+        for namelist in self.namelists.values():
+            landIceFluxMode = namelist.get('config_land_ice_flux_mode')
+            if landIceFluxMode not in ['standalone', 'coupled']:
+                raise ValueError(
+                    'config_land_ice_flux_mode must be "standalone" or '
+                    '"coupled".')
 
 
 class RemapMpasAntarcticMeltClimatology(RemapMpasClimatologySubtask):

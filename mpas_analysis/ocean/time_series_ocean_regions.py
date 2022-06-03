@@ -633,13 +633,14 @@ class ComputeRegionTimeSeriesSubtask(AnalysisTask):
     def _add_thermal_forcing(self, dsIn, cellMask):
         """ compute the thermal forcing """
 
-        c0 = self.namelist.getfloat(
+        namelist = self.namelists['input']
+        c0 = namelist.getfloat(
             'config_land_ice_cavity_freezing_temperature_coeff_0')
-        cs = self.namelist.getfloat(
+        cs = namelist.getfloat(
             'config_land_ice_cavity_freezing_temperature_coeff_S')
-        cp = self.namelist.getfloat(
+        cp = namelist.getfloat(
             'config_land_ice_cavity_freezing_temperature_coeff_p')
-        cps = self.namelist.getfloat(
+        cps = namelist.getfloat(
             'config_land_ice_cavity_freezing_temperature_coeff_pS')
 
         vars = ['timeMonthly_avg_activeTracers_temperature',

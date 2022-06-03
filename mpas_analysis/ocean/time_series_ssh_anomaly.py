@@ -108,12 +108,6 @@ class TimeSeriesSSHAnomaly(AnalysisTask):
         # -------
         # Xylar Asay-Davis
 
-        # first, call setup_and_check from the base class (AnalysisTask),
-        # which will perform some common setup, including storing:
-        #   self.inDirectory, self.plotsDirectory, self.namelist, self.streams
-        #   self.calendar
-        super().setup_and_check()
-
         config = self.config
 
         mainRunName = config.get('runs', 'mainRunName')

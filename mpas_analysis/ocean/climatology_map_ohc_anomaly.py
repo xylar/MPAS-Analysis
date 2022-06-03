@@ -319,10 +319,11 @@ class RemapMpasOHCClimatology(RemapMpasClimatologySubtask):
         dsRestart = xarray.open_dataset(self.restartFileName)
         dsRestart = dsRestart.isel(Time=0)
 
+        namelist = self.namelists['input']
         # specific heat [J/(kg*degC)]
-        cp = self.namelist.getfloat('config_specific_heat_sea_water')
+        cp = namelist.getfloat('config_specific_heat_sea_water')
         # [kg/m3]
-        rho = self.namelist.getfloat('config_density0')
+        rho = namelist.getfloat('config_density0')
 
         unitsScalefactor = 1e-9
 
