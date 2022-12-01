@@ -125,7 +125,8 @@ def _get_projection_comparison_descriptor(config, comparison_grid_name):
                        'arctic_extended': 'ArcticExtended',
                        'north_atlantic': 'NorthAtlantic',
                        'north_pacific': 'NorthPacific',
-                       'subpolar_north_atlantic': 'SubpolarNorthAtlantic'}
+                       'subpolar_north_atlantic': 'SubpolarNorthAtlantic',
+                       'fris':'Fris'}
 
     grid_suffixes = {'antarctic': 'Antarctic_stereo',
                      'arctic': 'Arctic_stereo',
@@ -133,7 +134,8 @@ def _get_projection_comparison_descriptor(config, comparison_grid_name):
                      'arctic_extended': 'Arctic_stereo',
                      'north_atlantic': 'North_Atlantic',
                      'north_pacific': 'North_Pacific',
-                     'subpolar_north_atlantic': 'Subpolar_North_Atlantic'}
+                     'subpolar_north_atlantic': 'Subpolar_North_Atlantic',
+                     'fris':'Fris'}
 
     if comparison_grid_name not in option_suffixes:
         raise ValueError(f'{comparison_grid_name} is not one of the supported '
