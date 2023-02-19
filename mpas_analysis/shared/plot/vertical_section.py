@@ -945,8 +945,9 @@ def plot_vertical_section(
         cbar = plt.colorbar(plotHandle,
                             orientation='vertical',
                             spacing='uniform',
-                            aspect=9,
-                            ticks=colormapDict['ticks'])
+                            aspect=20,
+                            ticks=colormapDict['ticks'],
+                            extend='both')
 
         if colorbarLabel is not None:
             cbar.set_label(colorbarLabel)

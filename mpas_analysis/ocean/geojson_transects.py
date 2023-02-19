@@ -15,7 +15,9 @@ import numpy
 
 from mpas_analysis.shared import AnalysisTask
 from mpas_analysis.ocean.compute_transects_subtask import \
-    ComputeTransectsSubtask, TransectsObservations
+    TransectsObservations
+from mpas_analysis.ocean.compute_transects_with_sigma import \
+    ComputeTransectsWithSigma
 
 from mpas_analysis.ocean.plot_transect_subtask import PlotTransectSubtask
 
@@ -101,12 +103,15 @@ class GeojsonTransects(AnalysisTask):
             config, obsFileNames, horizontalResolution,
             transectCollectionName)
 
-        computeTransectsSubtask = ComputeTransectsSubtask(
+        variableList = [field['mpas'] for field in fields
+                        if not field['mpas'].startswith('sigma')]
+
+        computeTransectsSubtask = ComputeTransectsWithSigma(
             mpasClimatologyTask=mpasClimatologyTask,
             parentTask=self,
             climatologyName='geojson',
             transectCollectionName=transectCollectionName,
-            variableList=[field['mpas'] for field in fields],
+            variableList=variableList,
             seasons=seasons,
             obsDatasets=transectsObservations,
             verticalComparisonGridName=verticalComparisonGridName,
