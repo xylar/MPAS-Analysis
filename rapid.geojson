@@ -1,0 +1,48 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "RAPID"
+      },
+      "geometry": {
+        "coordinates": [
+          [
+            -80.0,
+            26.5
+          ],
+          [
+            -70.0,
+            26.5
+          ],
+          [
+            -60.0,
+            26.5
+          ],
+          [
+            -50.0,
+            26.5
+          ],
+          [
+            -40.0,
+            26.5
+          ],
+          [
+            -30.0,
+            26.5
+          ],
+          [
+            -10.0,
+            26.5
+          ],
+          [
+            0.0,
+            26.5
+          ]
+        ],
+        "type": "LineString"
+      }
+    }
+  ]
+}
