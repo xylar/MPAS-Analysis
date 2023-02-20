@@ -336,6 +336,7 @@ def plot_vertical_section_comparison(
         singlePanel = True
     else:
         singlePanel = False
+    singlePanel = True
 
     # set up figure
     if dpi is None:
@@ -350,10 +351,10 @@ def plot_vertical_section_comparison(
                 if len(xCoords) == 3:
                     figsize = (8, 8)
                 else:
-                    figsize = (8, 7)
+                    figsize = (12, 6)
             else:
                 # color bar and legend
-                figsize = (8, 7)
+                figsize = (12, 6)
         elif len(xCoords) == 3:
             figsize = (8, 17)
         else:
@@ -402,6 +403,7 @@ def plot_vertical_section_comparison(
         comparisonFieldName = refTitle
         originalFieldName = modelTitle
 
+    contourComparisonField = refArray
     axes = []
 
     _, ax = plot_vertical_section(
@@ -981,20 +983,20 @@ def plot_vertical_section(
         if len(contourLevels) == 0:
             # automatic calculation of contour levels
             contourLevels = None
-        mask = field.notnull()
-        fieldMasked = field.where(mask, 0.0).values.ravel()
+        # mask = field.notnull()
+        # fieldMasked = field.where(mask, 0.0).values.ravel()
 
-        cs1 = plt.tricontour(maskedTriangulation, fieldMasked,
-                             levels=contourLevels,
-                             colors=lineColor,
-                             linestyles=lineStyle,
-                             linewidths=lineWidth,
-                             cmap=contourColormap)
-        if labelContours:
-            fmt_string = "%%1.%df" % int(contourLabelPrecision)
-            plt.clabel(cs1, fmt=fmt_string)
+        # cs1 = plt.tricontour(maskedTriangulation, fieldMasked,
+        #                      levels=contourLevels,
+        #                      colors=lineColor,
+        #                      linestyles=lineStyle,
+        #                      linewidths=lineWidth,
+        #                      cmap=contourColormap)
+        # if labelContours:
+        #     fmt_string = "%%1.%df" % int(contourLabelPrecision)
+        #     plt.clabel(cs1, fmt=fmt_string)
 
-        if plotAsContours and contourComparisonField is not None:
+        if contourComparisonField is not None:
             if comparisonContourLineWidth is None:
                 comparisonContourLineWidth = lineWidth
             mask = contourComparisonField.notnull()
@@ -1007,8 +1009,9 @@ def plot_vertical_section(
                                  linewidths=comparisonContourLineWidth,
                                  cmap=contourColormap)
 
+            print(f'labelContours: {labelContours}')
             if labelContours:
-                plt.clabel(cs2, fmt=fmt_string)
+                ax.clabel(cs2, fmt=fmt_string, fontsize=8)
 
     plotLegend = (((lineColor is not None and
                     comparisonContourLineColor is not None) or
@@ -1091,8 +1094,8 @@ def plot_vertical_section(
         formatString = None
         xticks = None
         if numUpperTicks is not None:
-            xticks = np.linspace(xlimits[0], xlimits[1], numUpperTicks)
-            tickValues = np.interp(xticks, xCoords[0].values, xCoords[1].values)
+            tickValues = np.linspace(-70, -20, 6)
+            xticks = np.interp(tickValues, xCoords[1].values, xCoords[0].values)
             ax2.set_xticks(xticks)
             formatString = "{{0:.{:d}f}}{}".format(
                 upperXAxisTickLabelPrecision, r'$\degree$')

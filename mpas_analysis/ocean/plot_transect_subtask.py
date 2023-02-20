@@ -450,6 +450,8 @@ class PlotTransectSubtask(AnalysisTask):
             refOutput = remappedRefClimatology[self.refFieldName]
             bias = modelOutput - refOutput
 
+        refOutput = remappedModelClimatology['sigma0']
+
         filePrefix = self.filePrefix
         outFileName = '{}/{}.png'.format(self.plotsDirectory, filePrefix)
         title = '{}\n({}, years {:04d}-{:04d})'.format(
@@ -542,11 +544,12 @@ class PlotTransectSubtask(AnalysisTask):
         else:
             contourLineWidth = config.getfloat('transects', 'contourLineWidth')
             contourLineColor = config.get('transects', 'contourLineColor')
-            comparisonContourLineColor = None
+            comparisonContourLineColor = 'k'
             contourColormap = None
             labelContours = config.getboolean('transects',
                                               'labelContoursOnHeatmaps')
-            comparisonContourLineWidth = None
+            comparisonContourLineWidth = \
+                config.getfloat('transects', 'comparisonContourLineWidth')
 
         contourLabelPrecision = config.getint('transects',
                                               'contourLabelPrecision')
