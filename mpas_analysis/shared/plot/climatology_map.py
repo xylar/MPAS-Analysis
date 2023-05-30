@@ -169,7 +169,8 @@ def plot_polar_comparison(
             matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
             ax.contour(LonsPeriodic, LatsPeriodic, fieldPeriodic,
                        levels=contours, colors=lineColor,
-                       linewidths=lineWidth, transform=data_crs)
+                       linewidths=lineWidth, transform=data_crs,
+                       zorder=2)
 
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1,
@@ -605,7 +606,8 @@ def plot_projection_comparison(
             x_center = 0.5*(x[0:-1] + x[1:])
             y_center = 0.5*(y[0:-1] + y[1:])
             cs = ax.contour(x_center, y_center, array, levels=contours,
-                            colors=lineColor, linewidths=lineWidth)
+                            colors=lineColor, linewidths=lineWidth
+                            zorder=2)
             # add arrows to streamlines
             if arrows is not None:
                 for collection in cs.collections:
@@ -774,10 +776,10 @@ def _add_land_lakes_coastline(ax, ice_shelves=True):
             'physical', 'lakes', '50m', edgecolor='k',
             facecolor='white',
             linewidth=0.5)
-    ax.add_feature(land_50m, zorder=2)
+    ax.add_feature(land_50m, zorder=3)
     if ice_shelves:
         ice_50m = cartopy.feature.NaturalEarthFeature(
                 'physical', 'antarctic_ice_shelves_polys', '50m', edgecolor='k',
                 facecolor='lightgray', linewidth=0.5)
-        ax.add_feature(ice_50m, zorder=3)
-    ax.add_feature(lakes_50m, zorder=4)
+        ax.add_feature(ice_50m, zorder=4)
+    ax.add_feature(lakes_50m, zorder=5)
