@@ -134,7 +134,8 @@ def get_remapper(config, sourceDescriptor, comparisonDescriptor,
     with TemporaryDirectory(dir=mappingSubdirectory) as tempdir:
         remapper.build_mapping_file(method=method, logger=logger,
                                     mpiTasks=mpiTasks, tempdir=tempdir,
-                                    esmf_parallel_exec=esmf_parallel_exec)
+                                    esmf_parallel_exec=esmf_parallel_exec,
+                                    extrap_method='neareststod')
 
     return remapper
 
