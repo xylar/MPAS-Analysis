@@ -543,7 +543,7 @@ def plot_projection_comparison(
     # Authors
     # -------
     # Xylar Asay-Davis
-    def add_arrow_to_line_2d(ax, path, arrow_spacing=8e5, arrow_width=1.5e4):
+    def add_arrow_to_line_2d(ax, path, arrow_spacing=3e5, arrow_width=6e3):
         """
         https://stackoverflow.com/a/27637925/7728169
         Add arrows to a matplotlib.lines.Line2D at selected locations.
@@ -606,7 +606,7 @@ def plot_projection_comparison(
             x_center = 0.5*(x[0:-1] + x[1:])
             y_center = 0.5*(y[0:-1] + y[1:])
             cs = ax.contour(x_center, y_center, array, levels=contours,
-                            colors=lineColor, linewidths=lineWidth
+                            colors=lineColor, linewidths=lineWidth,
                             zorder=2)
             # add arrows to streamlines
             if arrows is not None:
