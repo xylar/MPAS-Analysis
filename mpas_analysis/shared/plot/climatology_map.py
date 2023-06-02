@@ -771,20 +771,20 @@ def _add_stats_text(names, values, ax, loc):
 def _add_land_lakes_coastline(ax, ice_shelves=True):
     land_50m = cartopy.feature.NaturalEarthFeature(
             'physical', 'land', '50m', edgecolor='k',
-            facecolor='#cccccc', linewidth=0.5)
+            facecolor='#cccccc', linewidth=1.0)
     lakes_50m = cartopy.feature.NaturalEarthFeature(
             'physical', 'lakes', '50m', edgecolor='k',
             facecolor='white',
-            linewidth=0.5)
+            linewidth=1.0)
     ax.add_feature(land_50m, zorder=3)
     if ice_shelves:
         ice_50m = cartopy.feature.NaturalEarthFeature(
                 'physical', 'antarctic_ice_shelves_polys', '50m', edgecolor='k',
-                facecolor='lightgray', linewidth=0.5)
+                facecolor='lightgray', linewidth=1.0)
         ax.add_feature(ice_50m, zorder=4)
     else:
         ice_50m = cartopy.feature.NaturalEarthFeature(
                 'physical', 'antarctic_ice_shelves_polys', '50m', edgecolor='k',
-                facecolor='none', linewidth=0.5)
+                facecolor='none', linewidth=1.0)
         ax.add_feature(ice_50m, zorder=4)
     ax.add_feature(lakes_50m, zorder=5)
