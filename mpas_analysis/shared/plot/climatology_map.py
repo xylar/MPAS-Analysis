@@ -782,4 +782,9 @@ def _add_land_lakes_coastline(ax, ice_shelves=True):
                 'physical', 'antarctic_ice_shelves_polys', '50m', edgecolor='k',
                 facecolor='lightgray', linewidth=0.5)
         ax.add_feature(ice_50m, zorder=4)
+    else:
+        ice_50m = cartopy.feature.NaturalEarthFeature(
+                'physical', 'antarctic_ice_shelves_polys', '50m', edgecolor='k',
+                facecolor='none', linewidth=0.5)
+        ax.add_feature(ice_50m, zorder=4)
     ax.add_feature(lakes_50m, zorder=5)
