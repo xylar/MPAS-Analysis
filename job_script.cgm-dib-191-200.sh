@@ -17,5 +17,5 @@ export HDF5_USE_FILE_LOCKING=FALSE
 
 # For an E3SM cryosphere run, include --polar_regions, or exclude
 # this extra flag for default parameters
-mpas_analysis --polar_regions --verbose shared.cfg cgm-dib-191-200.cfg
+mpas_analysis --polar_regions --verbose shared.cfg cgm-dib-191-200.cfg --purge
 
