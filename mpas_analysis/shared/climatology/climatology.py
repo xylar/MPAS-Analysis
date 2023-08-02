@@ -131,10 +131,12 @@ def get_remapper(config, sourceDescriptor, comparisonDescriptor,
         build_config_full_path(config, 'output',
                                'mappingSubdirectory')
     make_directories(mappingSubdirectory)
-    with TemporaryDirectory(dir=mappingSubdirectory) as tempdir:
-        remapper.build_mapping_file(method=method, logger=logger,
-                                    mpiTasks=mpiTasks, tempdir=tempdir,
-                                    esmf_parallel_exec=esmf_parallel_exec)
+    tempdir = f'{mappingFileName}_tmp/'
+    make_directories(tempdir)
+    # with TemporaryDirectory(dir=mappingSubdirectory) as tempdir:
+    remapper.build_mapping_file(method=method, logger=logger,
+                                mpiTasks=mpiTasks, tempdir=tempdir,
+                                esmf_parallel_exec=esmf_parallel_exec)
 
     return remapper
 
