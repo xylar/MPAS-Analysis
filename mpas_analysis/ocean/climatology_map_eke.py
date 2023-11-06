@@ -43,7 +43,7 @@ class ClimatologyMapEKE(AnalysisTask):
         mpasClimatologyTask : ``MpasClimatologyTask``
             The task that produced the climatology to be remapped and plotted
 
-        controlconfig : mpas_tools.config.MpasConfigParser, optional
+        controlConfig : mpas_tools.config.MpasConfigParser, optional
             Configuration options for a control run (if any)
         """
         # Authors
@@ -84,7 +84,11 @@ class ClimatologyMapEKE(AnalysisTask):
         variableList = ['timeMonthly_avg_velocityZonal',
                         'timeMonthly_avg_velocityMeridional',
                         'timeMonthly_avg_velocityZonalSquared',
-                        'timeMonthly_avg_velocityMeridionalSquared']
+                        'timeMonthly_avg_velocityMeridionalSquared',
+                        'timeMonthly_avg_GMBolusVelocityZonal',
+                        'timeMonthly_avg_GMBolusVelocityMeridional',
+                        'timeMonthly_avg_mleVelocityZonal',
+                        'timeMonthly_avg_mleVelocityMeridional']
         remapClimatologySubtask = RemapMpasEKEClimatology(
             mpasClimatologyTask=mpasClimatologyTask,
             parentTask=self,
@@ -137,7 +141,7 @@ class ClimatologyMapEKE(AnalysisTask):
 
                 subtask.set_plot_info(
                     outFileLabel=outFileLabel,
-                    fieldNameInTitle='EKE',
+                    fieldNameInTitle='Total EKE',
                     mpasFieldName=mpasFieldName,
                     refFieldName=refFieldName,
                     refTitleLabel=refTitleLabel,
@@ -191,22 +195,43 @@ class RemapMpasEKEClimatology(RemapMpasClimatologySubtask):
 
         # calculate mpas eddy kinetic energy
         scaleFactor = 100 * 100  # m2/s2 to cm2/s2
-        eke = 0.5 * scaleFactor * \
-            (climatology.timeMonthly_avg_velocityZonalSquared -
-             climatology.timeMonthly_avg_velocityZonal ** 2 +
-             climatology.timeMonthly_avg_velocityMeridionalSquared -
-             climatology.timeMonthly_avg_velocityMeridional ** 2)
+        # hijacking eke for total KE
+
+        # without MLE
+        eke = (0.5 * scaleFactor *
+               (climatology.timeMonthly_avg_velocityZonalSquared -
+                climatology.timeMonthly_avg_velocityZonal**2 +
+                climatology.timeMonthly_avg_velocityMeridionalSquared -
+                climatology.timeMonthly_avg_velocityMeridional**2 +
+                climatology.timeMonthly_avg_GMBolusVelocityZonal**2 +
+                climatology.timeMonthly_avg_GMBolusVelocityMeridional**2))
+
+        # with MLE
+        # eke = (0.5 * scaleFactor *
+        #        (climatology.timeMonthly_avg_velocityZonalSquared -
+        #         climatology.timeMonthly_avg_velocityZonal**2 +
+        #         climatology.timeMonthly_avg_velocityMeridionalSquared -
+        #         climatology.timeMonthly_avg_velocityMeridional**2 +
+        #         climatology.timeMonthly_avg_GMBolusVelocityZonal**2 +
+        #         climatology.timeMonthly_avg_GMBolusVelocityMeridional**2 +
+        #         climatology.timeMonthly_avg_mleVelocityZonal**2 +
+        #         climatology.timeMonthly_avg_mleVelocityMeridional**2))
+
 
         # drop unnecessary fields before re-mapping
         climatology.drop_vars(['timeMonthly_avg_velocityZonal',
                                'timeMonthly_avg_velocityMeridional',
                                'timeMonthly_avg_velocityZonalSquared',
-                               'timeMonthly_avg_velocityMeridionalSquared'])
+                               'timeMonthly_avg_velocityMeridionalSquared',
+                               'timeMonthly_avg_GMBolusVelocityZonal',
+                               'timeMonthly_avg_GMBolusVelocityMeridional',
+                               'timeMonthly_avg_mleVelocityZonal',
+                               'timeMonthly_avg_mleVelocityMeridional'])
 
         # this creates a new variable eke in climatology (like netcdf)
         climatology['eke'] = eke
         climatology.eke.attrs['units'] = 'cm$^[2]$ s$^{-2}$'
-        climatology.eke.attrs['description'] = 'eddy kinetic energy'
+        climatology.eke.attrs['description'] = 'total eddy kinetic energy'
 
         return climatology
 
