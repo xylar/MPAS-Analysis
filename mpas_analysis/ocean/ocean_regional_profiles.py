@@ -29,7 +29,8 @@ from mpas_analysis.shared.climatology import compute_climatology
 from mpas_analysis.shared.constants import constants
 from mpas_analysis.shared.html import write_image_xml
 from mpas_analysis.shared.plot import savefig, add_inset
-from mpas_analysis.shared.regions.compute_region_masks_subtask import get_feature_list
+from mpas_analysis.shared.regions.compute_region_masks_subtask import \
+    get_feature_list
 
 
 class OceanRegionalProfiles(AnalysisTask):
@@ -177,7 +178,8 @@ class OceanRegionalProfiles(AnalysisTask):
             combineSubtask = self.combineSubtasks[regionGroup][key]
             # add any missing fields and seasons
             _update_fields(combineSubtask.fields, fields)
-            combineSubtask.seasons = list(set(seasons + combineSubtask.seasons))
+            combineSubtask.seasons = \
+                list(set(seasons + combineSubtask.seasons))
         else:
             combineSubtask = CombineRegionalProfileTimeSeriesSubtask(
                 self, regionGroup, timeSeriesName, seasons, fields,
@@ -334,7 +336,10 @@ class ComputeRegionalProfileTimeSeriesSubtask(AnalysisTask):
                                              self.historyStreams,
                                              'timeSeriesStatsMonthlyOutput')
 
-        variableList = [field['mpas'] for field in self.fields]
+        variableSet = set()
+        for field in self.fields:
+            for fieldName in field['mpas']:
+                variableSet.add(fieldName)
 
         outputExists = os.path.exists(outputFileName)
         outputValid = outputExists
@@ -402,12 +407,12 @@ class ComputeRegionalProfileTimeSeriesSubtask(AnalysisTask):
         totalArea = self._masked_area_sum(cellMasks, areaCell, vertDepthMask)
 
         datasets = []
-        for timeIndex, fileName in enumerate(inputFiles):
+        for _, fileName in enumerate(inputFiles):
 
             dsLocal = open_mpas_dataset(
                 fileName=fileName,
                 calendar=self.calendar,
-                variableList=variableList,
+                variableList=variableSet,
                 startDate=startDate,
                 endDate=endDate)
             dsLocal = dsLocal.isel(Time=0)
@@ -420,11 +425,16 @@ class ComputeRegionalProfileTimeSeriesSubtask(AnalysisTask):
             # for each region and variable, compute area-weighted sum and
             # squared sum
             for field in self.fields:
-                variableName = field['mpas']
+                variables = field['mpas']
                 prefix = field['prefix']
                 self.logger.info('      {}'.format(field['titleName']))
 
-                var = dsLocal[variableName].where(vertDepthMask)
+                if prefix == 'oceanHeatContent':
+                    var = _compute_ohc(self.namelist, dsLocal)
+                else:
+                    var = dsLocal[variables[0]]
+
+                var = var.where(vertDepthMask)
 
                 meanName = '{}_mean'.format(prefix)
                 dsLocal[meanName] = \
@@ -436,7 +446,7 @@ class ComputeRegionalProfileTimeSeriesSubtask(AnalysisTask):
                     totalArea
 
             # drop the original variables
-            dsLocal = dsLocal.drop_vars(variableList)
+            dsLocal = dsLocal.drop_vars(variableSet)
 
             datasets.append(dsLocal)
 
@@ -490,8 +500,8 @@ class CombineRegionalProfileTimeSeriesSubtask(AnalysisTask):
     # -------
     # Xylar Asay-Davis
 
-    def __init__(self, parentTask, regionGroup, timeSeriesName, seasons, fields,
-                 startYears, endYears):
+    def __init__(self, parentTask, regionGroup, timeSeriesName, seasons,
+                 fields, startYears, endYears):
         """
         Construct the analysis task.
 
@@ -980,3 +990,22 @@ def _update_fields(fields, newFields):
                 break
         if not found:
             fields.append(newFields[outer])
+
+
+def _compute_ohc(namelist, ds):
+    """
+    Compute the OHC from the temperature and layer thicknesses in a given
+    datasets.
+    """
+    # specific heat [J/(kg*degC)]
+    cp = namelist.getfloat('config_specific_heat_sea_water')
+    # [kg/m3]
+    rho = namelist.getfloat('config_density0')
+
+    units_scale_factor = 1e-9
+
+    temperature = ds['timeMonthly_avg_activeTracers_temperature']
+    layer_thickness = ds['timeMonthly_avg_layerThickness']
+
+    ohc = units_scale_factor * rho * cp * layer_thickness * temperature
+    return ohc
