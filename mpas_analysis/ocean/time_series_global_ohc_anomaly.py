@@ -27,9 +27,10 @@ from mpas_analysis.ocean.plot_depth_integrated_time_series_subtask import \
 from mpas_analysis.shared.constants import constants as mpas_constants
 
 
-class TimeSeriesOHCAnomaly(AnalysisTask):
+class TimeSeriesGlobalOHCAnomaly(AnalysisTask):
     """
-    Performs analysis of ocean heat content (OHC) from time-series output.
+    Performs analysis of global ocean heat content (OHC) from time-series
+    output.
     """
     # Authors
     # -------
@@ -56,14 +57,13 @@ class TimeSeriesOHCAnomaly(AnalysisTask):
         # Xylar Asay-Davis
 
         # first, call the constructor from the base class (AnalysisTask)
-        super(TimeSeriesOHCAnomaly, self).__init__(
+        super().__init__(
             config=config,
-            taskName='timeSeriesOHCAnomaly',
+            taskName='timeSeriesGlobalOHCAnomaly',
             componentName='ocean',
             tags=['timeSeries', 'ohc', 'publicObs', 'anomaly'])
 
-        sectionName = 'timeSeriesOHCAnomaly'
-        regionNames = config.getexpression(sectionName, 'regions')
+        sectionName = 'timeSeriesGlobalOHCAnomaly'
         movingAveragePoints = config.getint(sectionName, 'movingAveragePoints')
 
         self.variableDict = {}
@@ -74,7 +74,7 @@ class TimeSeriesOHCAnomaly(AnalysisTask):
 
         mpasFieldName = 'ohc'
 
-        timeSeriesFileName = 'regionAveragedOHCAnomaly.nc'
+        timeSeriesFileName = 'globalAveragedOHCAnomaly.nc'
 
         anomalyTask = ComputeAnomalySubtask(
             parentTask=self,
@@ -85,57 +85,52 @@ class TimeSeriesOHCAnomaly(AnalysisTask):
             alter_dataset=self._compute_ohc)
         self.add_subtask(anomalyTask)
 
-        for regionName in regionNames:
-            caption = 'Trend of {} OHC Anomaly vs depth'.format(
-                regionName)
-            plotTask = PlotHovmollerSubtask(
-                parentTask=self,
-                regionName=regionName,
-                inFileName=timeSeriesFileName,
-                outFileLabel='ohcAnomalyZ',
-                fieldNameInTitle='OHC Anomaly',
-                mpasFieldName=mpasFieldName,
-                unitsLabel=r'[$\times 10^{22}$ J]',
-                sectionName='hovmollerOHCAnomaly',
-                thumbnailSuffix=u'ΔOHC',
-                imageCaption=caption,
-                galleryGroup='Trends vs Depth',
-                groupSubtitle=None,
-                groupLink='trendsvsdepth',
-                galleryName=None)
+        regionName = 'global'
+        caption = 'Trend of Global OHC Anomaly vs depth'
+        plotTask = PlotHovmollerSubtask(
+            parentTask=self,
+            regionName=regionName,
+            inFileName=timeSeriesFileName,
+            outFileLabel='ohcAnomalyZ',
+            fieldNameInTitle='OHC Anomaly',
+            mpasFieldName=mpasFieldName,
+            unitsLabel=r'[$\times 10^{22}$ J]',
+            sectionName='hovmollerGlobalOHCAnomaly',
+            thumbnailSuffix=u'ΔOHC',
+            imageCaption=caption,
+            galleryGroup='Trends vs Depth',
+            groupSubtitle=None,
+            groupLink='trendsvsdepth',
+            galleryName=None)
 
-            plotTask.run_after(anomalyTask)
-            self.add_subtask(plotTask)
+        plotTask.run_after(anomalyTask)
+        self.add_subtask(plotTask)
 
-            caption = 'Running Mean of the Anomaly in {} Ocean Heat ' \
-                'Content'.format(regionName)
-            plotTask = PlotOHCAnomaly(
-                parentTask=self,
-                regionName=regionName,
-                inFileName=timeSeriesFileName,
-                outFileLabel='ohcAnomaly',
-                fieldNameInTitle='OHC Anomaly',
-                mpasFieldName=mpasFieldName,
-                yAxisLabel=r'$\Delta$OHC [$\times 10^{22}$ J]',
-                sectionName='timeSeriesOHCAnomaly',
-                thumbnailSuffix=u'ΔOHC',
-                imageCaption=caption,
-                galleryGroup='Time Series',
-                groupSubtitle=None,
-                groupLink='timeseries',
-                galleryName=None,
-                controlConfig=controlConfig)
+        caption = 'Running Mean of the Anomaly in Global Ocean Heat Content'
+        plotTask = PlotOHCAnomaly(
+            parentTask=self,
+            regionName=regionName,
+            inFileName=timeSeriesFileName,
+            outFileLabel='ohcAnomaly',
+            fieldNameInTitle='OHC Anomaly',
+            mpasFieldName=mpasFieldName,
+            yAxisLabel=r'$\Delta$OHC [$\times 10^{22}$ J]',
+            sectionName='timeSeriesGlobalOHCAnomaly',
+            thumbnailSuffix=u'ΔOHC',
+            imageCaption=caption,
+            galleryGroup='Time Series',
+            groupSubtitle=None,
+            groupLink='timeseries',
+            galleryName=None,
+            controlConfig=controlConfig)
 
-            plotTask.run_after(anomalyTask)
-            self.add_subtask(plotTask)
+        plotTask.run_after(anomalyTask)
+        self.add_subtask(plotTask)
 
     def _compute_ohc(self, ds):
         """
         Compute the OHC time series.
         """
-
-        # regionNames = self.config.getexpression('regions', 'regions')
-        # ds['regionNames'] = ('nOceanRegionsTmp', regionNames)
 
         # for convenience, rename the variables to simpler, shorter names
         ds = ds.rename(self.variableDict)

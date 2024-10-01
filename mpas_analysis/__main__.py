@@ -201,9 +201,9 @@ def build_analysis_list(config, controlConfig):
                                                        oceanTimeSeriesTask))
     analyses.append(ocean.TimeSeriesSalinityAnomaly(config,
                                                     oceanTimeSeriesTask))
-    analyses.append(ocean.TimeSeriesOHCAnomaly(config,
-                                               oceanTimeSeriesTask,
-                                               controlConfig))
+    analyses.append(ocean.TimeSeriesGlobalOHCAnomaly(config,
+                                                     oceanTimeSeriesTask,
+                                                     controlConfig))
     analyses.append(ocean.TimeSeriesSSHAnomaly(config,
                                                oceanTimeSeriesTask,
                                                controlConfig))

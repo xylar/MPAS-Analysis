@@ -31,7 +31,8 @@ from mpas_analysis.ocean.time_series_temperature_anomaly import \
     TimeSeriesTemperatureAnomaly
 from mpas_analysis.ocean.time_series_salinity_anomaly import \
     TimeSeriesSalinityAnomaly
-from mpas_analysis.ocean.time_series_ohc_anomaly import TimeSeriesOHCAnomaly
+from mpas_analysis.ocean.time_series_global_ohc_anomaly import \
+    TimeSeriesGlobalOHCAnomaly
 from mpas_analysis.ocean.time_series_ssh_anomaly import TimeSeriesSSHAnomaly
 
 from mpas_analysis.ocean.time_series_sst import TimeSeriesSST
