@@ -80,13 +80,29 @@ class OceanRegionalProfiles(AnalysisTask):
         regionGroups = config.getexpression('oceanRegionalProfiles',
                                             'regionGroups')
 
+        allowedFields = config.getexpression('oceanRegionalProfiles',
+                                             'allowedFields')
+
         for regionGroup in regionGroups:
             regionGroupSection = 'profiles{}'.format(
                 regionGroup.replace(' ', ''))
 
-            fields = config.getexpression(regionGroupSection, 'fields')
+            fieldsList = config.getexpression(regionGroupSection, 'fields')
 
-            max_bottom_depth = config.getexpression(regionGroupSection, 'maxDepth')
+            fields = []
+            for fieldName in fieldsList:
+                found = False
+                for field in allowedFields:
+                    if field['prefix'] == fieldName:
+                        fields.append(field)
+                        found = True
+                        break
+                if not found:
+                    raise ValueError(f'{fieldName} not found in '
+                                     f'oceanRegionalProfiles/allowedFields')
+
+            max_bottom_depth = config.getexpression(regionGroupSection,
+                                                    'maxDepth')
             seasons = config.getexpression(regionGroupSection, 'seasons')
 
             regionNames = config.getexpression(regionGroupSection,
