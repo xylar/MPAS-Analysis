@@ -82,28 +82,14 @@ class HovmollerOceanRegions(AnalysisTask):
 
         for regionGroup in regionGroups:
             suffix = regionGroup[0].upper() + regionGroup[1:].replace(' ', '')
-            regionGroupSection = 'hovmoller{}'.format(suffix)
+            regionGroupSection = f'hovmoller{suffix}'
             regionNames = config.getexpression(regionGroupSection,
                                                'regionNames')
             if len(regionNames) == 0:
                 return
 
-            computeAnomaly = config.getboolean(regionGroupSection,
-                                               'computeAnomaly')
-
-            fieldsList = config.getexpression(regionGroupSection, 'fields')
-
-            fields = []
-            for fieldName in fieldsList:
-                found = False
-                for field in allowedFields:
-                    if field['prefix'] == fieldName:
-                        fields.append(field)
-                        found = True
-                        break
-                if not found:
-                    raise ValueError(f'{fieldName} not found in '
-                                     f'oceanRegionalProfiles/allowedFields')
+            fields, anyAnomalies = _get_fields(
+                config, regionGroupSection, allowedFields)
 
             masksSubtask = regionMasksTask.add_mask_subtask(regionGroup)
             masksFile = masksSubtask.geojsonFileName
@@ -127,73 +113,74 @@ class HovmollerOceanRegions(AnalysisTask):
                 config, 'output', 'timeSeriesSubdirectory')
 
             # PlotHovmollerSubtask requires a relative path
-            inFileName = \
-                '{}/regionalProfiles_{}_{:04d}-{:04d}.nc'.format(
-                    timeSeriesName, timeSeriesName,
-                    startYear, endYear)
-            if computeAnomaly:
-                inFullPath = '{}/{}'.format(baseDirectory, inFileName)
-                outFileName = \
-                    '{}/anomaly_{}_{:04d}-{:04d}.nc'.format(
-                        timeSeriesName, timeSeriesName,
-                        startYear, endYear)
-                outFullPath = '{}/{}'.format(baseDirectory, outFileName)
+            combinedFileName = \
+                f'{timeSeriesName}/regionalProfiles_{timeSeriesName}_' \
+                f'{startYear:04d}-{endYear:04d}.nc'
+            if anyAnomalies:
+                inFullPath = f'{baseDirectory}/{combinedFileName}'
+                anomalyFileName = \
+                    f'{timeSeriesName}/anomaly_{timeSeriesName}_' \
+                    f'{startYear:04d}-{endYear:04d}.nc'
+                outFullPath = f'{baseDirectory}/{anomalyFileName}'
                 anomalySubtask = ComputeHovmollerAnomalySubtask(
                     self, inFullPath, outFullPath, movingAveragePoints)
                 self.add_subtask(anomalySubtask)
                 anomalySubtask.run_after(combineSubtask)
-                # PlotHovmollerSubtask requires a relative path
-                inFileName = outFileName
             else:
                 anomalySubtask = None
+                anomalyFileName = None
 
             for field in fields:
                 prefix = field['prefix']
+                plotAnomaly = field['anomaly']
                 suffix = prefix[0].upper() + prefix[1:]
-                fieldSectionName = 'hovmollerOceanRegions{}'.format(suffix)
+                fieldSectionName = f'hovmollerOceanRegions{suffix}'
 
                 config.set(fieldSectionName, 'movingAveragePoints',
-                           '{}'.format(movingAveragePoints))
+                           f'{movingAveragePoints}')
 
                 for regionName in regionNames:
-                    if computeAnomaly:
-                        titleName = '{} Anomaly'.format(field['titleName'])
-                        caption = 'Anomaly of {} {} vs ' \
-                                  'depth'.format(regionName.replace('_', ' '),
-                                                 titleName)
-                        galleryGroup = '{} Anomaly vs Depths'.format(
-                            regionGroup)
+                    regionNameClean = regionName.replace('_', ' ')
+                    if plotAnomaly:
+                        titleName = f'{field["titleName"]} Anomaly'
+                        caption = f'Anomaly of {regionNameClean} ' \
+                                  f'{titleName} vs depth'
+                        galleryGroup = f'{regionGroup} Anomaly vs Depths'
+                        subtaskName = f'plotHovmollerAnomaly_{prefix}_' \
+                                      f'{regionNameClean}'
+                        inFileName = anomalyFileName
                     else:
                         titleName = field['titleName']
                         anomalySubtask = None
-                        caption = 'Time series of {} {} vs ' \
-                                  'depth'.format(regionName.replace('_', ' '),
-                                                 titleName)
-                        galleryGroup = '{} Time Series vs Depths'.format(
-                            regionGroup)
+                        caption = f'Time series of {regionNameClean} ' \
+                                  f'{titleName} vs depth'
+                        galleryGroup = \
+                            f'{regionGroup} Time Series vs Depths'
+                        subtaskName = \
+                            f'plotHovmoller_{prefix}_{regionNameClean}'
+                        inFileName = combinedFileName
 
-                    subtaskName = 'plotHovmoller_{}_{}'.format(
-                        prefix, regionName.replace(' ', '_'))
+                    groupLink = f'ocnreghovs_' \
+                                f'{regionGroup.replace(" ", "").lower()}'
                     hovmollerSubtask = PlotHovmollerSubtask(
                         parentTask=self,
                         regionName=regionName,
                         inFileName=inFileName,
-                        outFileLabel='{}_hovmoller'.format(prefix),
+                        outFileLabel=f'{prefix}_hovmoller',
                         fieldNameInTitle=titleName,
-                        mpasFieldName='{}_mean'.format(prefix),
+                        mpasFieldName=f'{prefix}_mean',
                         unitsLabel=field['units'],
                         sectionName=fieldSectionName,
                         thumbnailSuffix='',
                         imageCaption=caption,
                         galleryGroup=galleryGroup,
                         groupSubtitle=None,
-                        groupLink='ocnreghovs_{}'.format(
-                            regionGroup.replace(' ', '').lower()),
+                        groupLink=groupLink,
                         galleryName=titleName,
                         subtaskName=subtaskName,
                         controlConfig=controlConfig,
                         regionMaskFile=masksFile)
-                    if computeAnomaly:
+                    if plotAnomaly:
                         hovmollerSubtask.run_after(anomalySubtask)
                     else:
                         hovmollerSubtask.run_after(combineSubtask)
@@ -318,3 +305,41 @@ class ComputeHovmollerAnomalySubtask(AnalysisTask):
                                          outFileName)
 
         write_netcdf_with_fill(ds, outFileName)
+
+
+def _get_fields(config, regionGroupSection, allowedFields):
+    """
+    Get a list of fields, adding an entry in each indicating whether anomalies
+    should be computed/plotted
+    """
+    fields = []
+
+    noAnomalyList = config.getexpression(regionGroupSection, 'fields')
+    anomalyList = config.getexpression(regionGroupSection, 'anomalyFields')
+
+    anyAnomalies = len(anomalyList) > 0
+
+    for field in allowedFields:
+        fieldName = field['prefix']
+        if fieldName in noAnomalyList:
+            local = field.copy()
+            local['anomaly'] = False
+            fields.append[local]
+            noAnomalyList.pop(fieldName)
+        if fieldName in anomalyList:
+            local = field.copy()
+            local['anomaly'] = True
+            fields.append[local]
+            anomalyList.pop(fieldName)
+
+    if noAnomalyList:
+        raise ValueError(
+            f'{list(noAnomalyList)} not found in '
+            f'oceanRegionalProfiles/allowedFields')
+
+    if anomalyList:
+        raise ValueError(
+            f'{list(anomalyList)} not found in '
+            f'oceanRegionalProfiles/allowedFields')
+
+    return fields, anyAnomalies
