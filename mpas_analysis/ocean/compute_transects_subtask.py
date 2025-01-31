@@ -31,7 +31,7 @@ from mpas_analysis.shared.io.utility import build_config_full_path, \
     make_directories
 from mpas_analysis.shared.io import write_netcdf_with_fill
 
-from mpas_analysis.ocean.utility import compute_zmid
+from mpas_analysis.ocean.utility import compute_zmid, compute_zinterface
 
 from mpas_analysis.shared.interpolation import interp_1d
 
@@ -73,9 +73,12 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
         The mesh descriptor for the collection of all points in all transects,
         used for remapping
 
-    zMid : ``xarray.DataArray``
-        Vertical coordinate at the center of layers, used to interpolate to
+    zCoord : ``xarray.DataArray``
+        Vertical coordinate appropriate for ``vertDim``, used to interpolate to
         reference depths
+
+    vertDim : str, optional
+        The name of the vertical dimension in the climatology data set
     """
     # Authors
     # -------
@@ -84,7 +87,7 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
     def __init__(self, mpasClimatologyTask, parentTask, climatologyName,
                  transectCollectionName, variableList, seasons, obsDatasets,
                  verticalComparisonGridName='obs', verticalComparisonGrid=None,
-                 subtaskName='remapTransects'):
+                 subtaskName='remapTransects', vertDim='nVertLevels'):
 
         """
         Construct the analysis task and adds it as a subtask of the
@@ -137,6 +140,9 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
 
         subtaskName : str, optional
             The name of the subtask
+
+        vertDim : str, optional
+            The name of the vertical dimension in the climatology data set
         """
         # Authors
         # -------
@@ -157,12 +163,16 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
         self.x = None
         self.collectionDescriptor = None
         self.maxLevelCell = None
-        self.zMid = None
+        self.zCoord = None
+        if vertDim not in ['nVertLevels', 'nVertLevelsP1']:
+            raise ValueError('vertDim should be either "nVertLevels" or '
+                             '"nVertLevelsP1"')
+        self.vertDim = vertDim
         self.remap = self.obsDatasets.horizontalResolution != 'mpas'
         if self.obsDatasets.horizontalResolution == 'mpas' and \
                 self.verticalComparisonGridName != 'mpas':
-            raise ValueError('If the horizontal comparison grid is "mpas", the '
-                             'vertical grid must also be "mpas".')
+            raise ValueError('If the horizontal comparison grid is "mpas", '
+                             'the vertical grid must also be "mpas".')
 
     def setup_and_check(self):
         """
@@ -224,7 +234,7 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
         """
         Compute climatologies of melt rates from E3SM/MPAS output
 
-        This function has been overridden to compute  ``zMid`` based on data
+        This function has been overridden to compute  ``zCoord`` based on data
         from a restart file for later use in vertically interpolating to
         reference depths.
         """
@@ -232,20 +242,26 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
         # -------
         # Xylar Asay-Davis
 
-        # first, get maxLevelCell and zMid, needed for masking
-
         dsMesh = xr.open_dataset(self.restartFileName)
         dsMesh = dsMesh.isel(Time=0)
 
         self.maxLevelCell = dsMesh.maxLevelCell - 1
 
-        if self.remap:
-            zMid = compute_zmid(dsMesh.bottomDepth, dsMesh.maxLevelCell-1,
-                                dsMesh.layerThickness)
+        vertDim = self.vertDim
 
-            self.zMid = \
-                xr.DataArray.from_dict({'dims': ('nCells', 'nVertLevels'),
-                                        'data': zMid})
+        if self.remap:
+            if vertDim == 'nVertLevels':
+                zCoord = compute_zmid(dsMesh.bottomDepth,
+                                      dsMesh.maxLevelCell-1,
+                                      dsMesh.layerThickness)
+            else:
+                zCoord = compute_zinterface(dsMesh.bottomDepth,
+                                            dsMesh.maxLevelCell-1,
+                                            dsMesh.layerThickness)
+
+            self.zCoord = \
+                xr.DataArray.from_dict({'dims': ('nCells', vertDim),
+                                        'data': zCoord})
 
         # then, call run from the base class (RemapMpasClimatologySubtask),
         # which will perform masking and possibly horizontal remapping
@@ -285,7 +301,7 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
 
     def customize_masked_climatology(self, climatology, season):
         """
-        Add zMid to the climatologies
+        Add zCoord to the climatologies
 
         Parameters
         ----------
@@ -304,9 +320,11 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
         # -------
         # Xylar Asay-Davis
 
+        vertDim = self.vertDim
+
         zIndex = xr.DataArray.from_dict(
-            {'dims': ('nVertLevels',),
-             'data': numpy.arange(climatology.sizes['nVertLevels'])})
+            {'dims': (vertDim,),
+             'data': numpy.arange(climatology.sizes['vertDim'])})
 
         cellMask = zIndex <= self.maxLevelCell
 
@@ -315,9 +333,9 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
                 climatology[variableName].where(cellMask)
 
         if self.remap:
-            climatology['zMid'] = self.zMid
+            climatology['zCoord'] = self.zCoord
 
-        climatology = climatology.transpose('nVertLevels', 'nCells')
+        climatology = climatology.transpose(vertDim, 'nCells')
 
         return climatology
 
@@ -346,7 +364,6 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
         # Authors
         # -------
         # Xylar Asay-Davis
-
         climatology['transectNumber'] = self.transectNumber
 
         climatology['x'] = self.x
@@ -354,7 +371,7 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
         if 'nCells' in climatology.dims:
             climatology = climatology.rename({'nCells': 'nPoints'})
 
-        dims = ['nPoints', 'nVertLevels']
+        dims = ['nPoints', self.vertDim]
         if 'nv' in climatology.dims:
             dims.append('nv')
         climatology = climatology.transpose(*dims)
@@ -388,6 +405,7 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
         # Authors
         # -------
         # Xylar Asay-Davis
+        vertDim = self.vertDim
 
         if os.path.exists(outFileName):
             return
@@ -395,8 +413,8 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
         ds = ds.where(ds.transectNumber == transectIndex, drop=True)
 
         if self.verticalComparisonGridName == 'mpas':
-            z = ds.zMid
-            z = z.rename({'nVertLevels': 'nzOut'})
+            z = ds.zCoord
+            z = z.rename({vertDim: 'nzOut'})
         elif self.verticalComparisonGridName == 'obs':
             z = dsObs.z
             z = z.rename({'nz': 'nzOut'})
@@ -405,11 +423,11 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
             z = (('nzOut', ), self.verticalComparisonGrid)
 
         if self.verticalComparisonGridName == 'mpas':
-            ds = ds.rename({'zMid': 'z', 'nVertLevels': 'nz'})
+            ds = ds.rename({'zCoord': 'z', vertDim: 'nz'})
         else:
             ds['z'] = z
             # remap each variable
-            ds = interp_1d(ds, inInterpDim='nVertLevels', inInterpCoord='zMid',
+            ds = interp_1d(ds, inInterpDim=vertDim, inInterpCoord='zCoord',
                            outInterpDim='nzOut', outInterpCoord='z')
             ds = ds.rename({'nzOut': 'nz'})
 
@@ -507,8 +525,9 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
                     interpCellWeights = dsMpasTransect.interpHorizCellWeights
                     landIceFraction = dsMesh.landIceFraction.isel(
                         nCells=interpCellIndices)
-                    landIceFraction = (landIceFraction * interpCellWeights).sum(
-                        dim='nHorizWeights')
+                    landIceFraction = (
+                        (landIceFraction * interpCellWeights).sum(
+                            dim='nHorizWeights'))
                     dsMpasTransect['landIceFraction'] = landIceFraction
 
                 # use to_netcdf rather than write_netcdf_with_fill because
@@ -543,7 +562,7 @@ class ComputeTransectsSubtask(RemapMpasClimatologySubtask):
                     dsOnMpas = xr.Dataset(dsMpasTransect)
                     for var in dsMask.data_vars:
                         dims = dsMask[var].dims
-                        if 'nCells' in dims and 'nVertLevels' in dims:
+                        if 'nCells' in dims and self.vertDim in dims:
                             dsOnMpas[var] = \
                                 interp_mpas_to_transect_triangle_nodes(
                                     dsMpasTransect, dsMask[var])
@@ -611,8 +630,9 @@ class TransectsObservations(object):
             observations for a transect
 
         horizontalResolution : str
-            'obs' for the obs as they are, 'mpas' for the native MPAS mesh, or a
-            size in km if subdivision of the observational transect is desired.
+            'obs' for the obs as they are, 'mpas' for the native MPAS mesh, or
+            a size in km if subdivision of the observational transect is
+            desired.
 
         transectCollectionName : str
             A name that describes the collection of transects (e.g. the name
