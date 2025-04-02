@@ -1,0 +1,13 @@
+Ice Class,Ice-Free,New Ice,Grey Ice,Grey White Ice,Thin First Year ice 1st Stage,Thin First Year Ice 2nd Stage,Medium First Year Ice less than 1 m thick,Medium First Year Ice,Thick First Year Ice,Second Year Ice,Light Multi Year Ice less than 2.5 m thick,Heavy Multi Year Ice
+PC1,3,3,3,3,2,2,2,2,2,2,1,1
+PC2,3,3,3,3,2,2,2,2,2,1,1,0
+PC3,3,3,3,3,2,2,2,2,2,1,0,-1
+PC4,3,3,3,3,2,2,2,2,1,0,-1,-2
+PC5,3,3,3,3,2,2,1,1,0,-1,-2,-2
+PC6,3,2,2,2,2,1,1,0,-1,-2,-3,-3
+PC7,3,2,2,2,1,1,0,-1,-2,-3,-3,-3
+IA Super,3,2,2,2,2,1,0,-1,-2,-3,-4,-4
+IA,3,2,2,2,1,0,-1,-2,-3,-4,-5,-5
+IB,3,2,2,1,0,-1,-2,-3,-4,-5,-6,-6
+IC,3,2,1,0,-1,-2,-3,-4,-5,-6,-7,-8
+Not Ice Strengthened,3,1,0,-1,-2,-3,-4,-5,-6,-7,-8,-8

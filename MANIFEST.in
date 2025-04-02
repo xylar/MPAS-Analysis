@@ -10,3 +10,5 @@ include mpas_analysis/shared/plot/SciVisColorColormaps/*.xml
 include mpas_analysis/shared/plot/SciVisColorCustom/*.xml
 include mpas_analysis/test/test*/*
 include mpas_analysis/test/test*/*/*
+
+include mpas_analysis/sea_isce/RIV/*

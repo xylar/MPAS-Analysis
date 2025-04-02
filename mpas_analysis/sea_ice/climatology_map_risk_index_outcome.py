@@ -5,7 +5,7 @@
 # Additional copyright and license information can be found in the LICENSE file
 # distributed with this code, or at http://mpas-dev.github.com/license.html
 #
-import os
+import importlib.resources
 
 import xarray as xr
 import numpy as np
@@ -15,8 +15,6 @@ from mpas_analysis.shared import AnalysisTask
 from mpas_analysis.shared.climatology import RemapMpasClimatologySubtask
 
 from mpas_analysis.shared.plot import PlotClimatologyMapSubtask
-
-from mpas_analysis.shared.io.utility import build_obs_path
 
 
 class ClimatologyMapRiskIndexOutcome(AnalysisTask):
@@ -105,14 +103,10 @@ class ClimatologyMapRiskIndexOutcome(AnalysisTask):
         polarclass = np.int_(polarclass) - 1
 
         # read in table of Risk Index Values
-        riv_csv = build_obs_path(config, 'seaIce',
-                                 relativePathOption='riv{}'.format(hemisphere),
-                                 relativePathSection=section_name)
-
-        if not os.path.exists(riv_csv):
-            # it will be annoying to print a warning here, and we can't compute
-            # the analysis without the csv file, so we will just do nothing
-            return
+        with importlib.resources.path(
+                'mpas_analysis.sea_ice.riv',
+                'riv_MSC.1_Circ.1519_6_June_2016.csv') as riv_path:
+            riv_csv = str(riv_path)
 
         IceClassLabels = np.genfromtxt(riv_csv, delimiter=',', skip_header=1,
                                        dtype=str, usecols=(0,))
