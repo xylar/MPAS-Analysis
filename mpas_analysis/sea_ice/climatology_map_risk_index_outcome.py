@@ -8,12 +8,10 @@
 
 import xarray as xr
 import numpy as np
-from pyremap import LatLon2DGridDescriptor
 
 from mpas_analysis.shared import AnalysisTask
 
-from mpas_analysis.shared.climatology import RemapMpasClimatologySubtask, \
-    RemapObservedClimatologySubtask
+from mpas_analysis.shared.climatology import RemapMpasClimatologySubtask
 
 from mpas_analysis.shared.plot import PlotClimatologyMapSubtask
 
@@ -48,7 +46,7 @@ class ClimatologyMapRiskIndexOutcome(AnalysisTask):
 
         control_config : mpas_tools.config.MpasConfigParser, optional
             Configuration options for a control run (if any)
-        """
+        """  # noqa: E501
         # Authors
         # -------
         # Gennaro D'Angelo, Milena Veneziani
@@ -64,17 +62,20 @@ class ClimatologyMapRiskIndexOutcome(AnalysisTask):
             tags = tags + ['antarctic']
 
         # call the constructor from the base class (AnalysisTask)
-        super().__init__(config=config, taskName=task_name,
-            componentName='seaIce', tags=tags)
+        super().__init__(
+            config=config,
+            taskName=task_name,
+            componentName='seaIce',
+            tags=tags)
 
         self.mpas_climatology_task = mpas_climatology_task
 
         section_name = self.taskName
 
         if hemisphere == 'NH':
-            hemisphere_long= 'Northern'
+            hemisphere_long = 'Northern'
         else:
-            hemisphere_long= 'Southern'
+            hemisphere_long = 'Southern'
 
         # read in what seasons we want to plot
         seasons = config.getexpression(section_name, 'seasons')
@@ -83,8 +84,8 @@ class ClimatologyMapRiskIndexOutcome(AnalysisTask):
             raise ValueError(f'config section {section_name} does not contain '
                              f'a valid list of seasons')
 
-        comparison_grid_names = config.getexpression(section_name,
-                                                   'comparisonGrids')
+        comparison_grid_names = config.getexpression(
+            section_name, 'comparisonGrids')
 
         if len(comparison_grid_names) == 0:
             raise ValueError(f'config section {section_name} does not contain '
@@ -94,14 +95,15 @@ class ClimatologyMapRiskIndexOutcome(AnalysisTask):
         polarclass = config.getexpression(section_name, 'polarClass')
 
         if polarclass < 0 or polarclass > 12:
-            raise ValueError(f'config section {section_name} does not contain '
-                             f'a valid instance of Polar Class')
+            raise ValueError(
+                f'config section {section_name} does not contain '
+                f'a valid instance of Polar Class'
+            )
 
         # convert to 0-based array index
         polarclass = np.int_(polarclass) - 1
 
         # read in table of Risk Index Values
-        #riv_csv = 'riv_MSC.1_Circ.1519_6_June_2016.csv'
         riv_csv = build_obs_path(config, 'seaIce',
                                  relativePathOption='riv{}'.format(hemisphere),
                                  relativePathSection=section_name)
@@ -113,15 +115,19 @@ class ClimatologyMapRiskIndexOutcome(AnalysisTask):
         riskindexvalue = riskindexvalue[:, 1:]
         riskindexvalue = np.array(riskindexvalue)
 
-        # read in reference floe thicknesses for calculation of Risk Index Values
-        # Default values: [0.0, 0.5, 10, 15, 30, 50, 70, 100, 120, 170, 200, 250]/100
-        # (the default values were agreed upon by Elizabeth Hunke, Andrew Roberts,
-        # and Gennaro D'Angelo based on literature and IMO description)
+        # read in reference floe thicknesses for calculation of Risk Index
+        # Values
+        # Default values:
+        #    [0.0, 0.5, 10, 15, 30, 50, 70, 100, 120, 170, 200, 250]/100
+        # (the default values were agreed upon by Elizabeth Hunke, Andrew
+        # Roberts, and Gennaro D'Angelo based on literature and IMO
+        # description)
         h_to_typeofice = config.getexpression(section_name, 'h_to_typeofice')
         h_to_typeofice = np.array(h_to_typeofice)
 
         # read in what type of variables we want to plot
-        useIceCategories = config.getexpression(section_name, 'useIceCategories')
+        useIceCategories = config.getexpression(
+            section_name, 'useIceCategories')
         if useIceCategories:
             variable_list = ['timeMonthly_avg_iceAreaCategory',
                              'timeMonthly_avg_iceVolumeCategory']
@@ -136,34 +142,36 @@ class ClimatologyMapRiskIndexOutcome(AnalysisTask):
             variable_list=variable_list,
             comparison_grid_names=comparison_grid_names,
             seasons=seasons,
-            polarclass = polarclass,
+            polarclass=polarclass,
             riskindexvalue=riskindexvalue,
-            h_to_typeofice=h_to_typeofice)
-        
+            h_to_typeofice=h_to_typeofice,
+        )
+
         self.add_subtask(remap_climatology_subtask)
 
         for season in seasons:
             for comparison_grid_name in comparison_grid_names:
 
                 if control_config is None:
-                    remap_observations_subtask = None
                     gallery_name = None
                     ref_title_label = None
-                    ref_field_name = None
                     diff_title_label = 'Model - Observations'
 
                 else:
-                    control_run_name = control_config.get('runs', 'mainRunName')
+                    control_run_name = control_config.get(
+                        'runs', 'mainRunName')
                     gallery_name = None
                     ref_title_label = f'Control: {control_run_name}'
                     field_name = field_name
                     diff_title_label = 'Main - Control'
 
-                image_caption = f'Climatology Map of ' \
-                                f'{hemisphere_long}-Hemisphere Risk Index Outcome, ' \
-                                f'{IceClassLabels[polarclass]}'
-                gallery_group = f'{hemisphere_long}-Hemisphere Risk Index Outcome, ' \
-                                f'{IceClassLabels[polarclass]}'
+                image_caption = (
+                    f'Climatology Map of '
+                    f'{hemisphere_long}-Hemisphere Risk Index Outcome, '
+                    f'{IceClassLabels[polarclass]}')
+                gallery_group = (
+                    f'{hemisphere_long}-Hemisphere Risk Index Outcome, '
+                    f'{IceClassLabels[polarclass]}')
 
                 # make a new subtask for this season and comparison grid
                 subtask = PlotClimatologyMapSubtask(
@@ -174,9 +182,9 @@ class ClimatologyMapRiskIndexOutcome(AnalysisTask):
                     controlConfig=control_config)
 
                 subtask.set_plot_info(
-                    outFileLabel=f'risk_index_outcome{hemisphere}_' \
+                    outFileLabel=f'risk_index_outcome{hemisphere}_'
                                  f'{redClassLabels[polarclass]}',
-                    fieldNameInTitle=f'Risk Index Outcome, ' \
+                    fieldNameInTitle=f'Risk Index Outcome, '
                                      f'{IceClassLabels[polarclass]}',
                     mpasFieldName=field_name,
                     refFieldName=field_name,
@@ -226,22 +234,27 @@ class RemapMpasRiskIndexOutcomeClimatology(RemapMpasClimatologySubtask):
         comparison_grid_names : list of {'latlon', 'antarctic'}
             The name(s) of the comparison grid to use for remapping.
         polarclass : integer
-            Polar Class of vessel for which Risk Index Outcomes are computed 
+            Polar Class of vessel for which Risk Index Outcomes are computed
         riskindexvalue : list of integers
             Risk Index Values for a vessel of given Polar Class and type of
             sea ice (values defined by the International Maritime Organization,
             IMO).
         h_to_typeofice: list of reference ice thicknesses
-            Values that establish an equvalence between IMO type of ice 
+            Values that establish an equivalence between IMO type of ice
             (and age of ice) and ice floe thickness
-        """
+        """  # noqa: E501
 
-        subtask_name = f'remapMpasClimatology_RiskIndexOutcome'
+        subtask_name = 'remapMpasClimatology_RiskIndexOutcome'
         # call the constructor from the base class
         # (RemapMpasClimatologySubtask)
         super().__init__(
-            mpas_climatology_task, parent_task, climatology_name,
-            variable_list, seasons, comparison_grid_names)
+            mpas_climatology_task,
+            parent_task,
+            climatology_name,
+            variable_list,
+            seasons,
+            comparison_grid_names,
+            subtaskName=subtask_name)
 
         self.mpas_climatology_task = mpas_climatology_task
         self.variable_list = variable_list
@@ -261,12 +274,13 @@ class RemapMpasRiskIndexOutcomeClimatology(RemapMpasClimatologySubtask):
 
         # don't add the variables and seasons to mpas_climatology_task until
         # we're sure this subtask is supposed to run
-        self.mpas_climatology_task.add_variables(self.variable_list,
-                                                     self.seasons)
+        self.mpas_climatology_task.add_variables(
+            self.variable_list, self.seasons)
 
     def customize_masked_climatology(self, climatology, season):
         """
-        Compute the Risk Index Outcome from sea-ice concentration and (floe) thickness.
+        Compute the Risk Index Outcome from sea-ice concentration and (floe)
+        thickness.
 
         Parameters
         ----------
@@ -290,14 +304,16 @@ class RemapMpasRiskIndexOutcomeClimatology(RemapMpasClimatologySubtask):
 
     def _compute_risk_index_outcome(self, climatology):
         """
-        Compute the Risk Index Outcome from sea-ice concentration and (floe) thickness,
-        as outlined in the International Maritime Organization (IMO) document.
+        Compute the Risk Index Outcome from sea-ice concentration and (floe)
+        thickness, as outlined in the International Maritime Organization (IMO)
+        document.
         (https://www.imorules.com/GUID-2C1D86CB-5D58-490F-B4D4-46C057E1D102.html)
-        """
+        """  # noqa: E501
 
-        # whether to use sea-ice categories for sea-ice concentration and thickness
-        useIceCategories = self.config.getexpression(self.taskName,
-                                                     'useIceCategories')
+        # whether to use sea-ice categories for sea-ice concentration and
+        # thickness
+        useIceCategories = self.config.getexpression(
+            self.taskName, 'useIceCategories')
 
         ds_restart = xr.open_dataset(self.restartFileName)
         ds_restart = ds_restart.isel(Time=0)
@@ -349,7 +365,10 @@ class RemapMpasRiskIndexOutcomeClimatology(RemapMpasClimatologySubtask):
             # Risk Index Outcome for single-category ice. There are only two
             # terms per cell: one coming from the fraction of the cell covered
             # by open water and one coming from the fraction covered by sea ice
-            rio = (1.0 - concentration) * riv[pc, 0] + concentration * riv_iceCell
+            rio = (
+                (1.0 - concentration) * riv[pc, 0] +
+                concentration * riv_iceCell
+            )
 
         # out-of-range corrections
         rio = np.clip(rio, a_min=riv[pc, -1], a_max=riv[pc, 0])
